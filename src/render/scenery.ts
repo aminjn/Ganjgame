@@ -4,7 +4,7 @@ import {
   BufferGeometry, Color, InstancedMesh, Material, MeshLambertMaterial, Object3D, Group, Box3, Vector3, Mesh, DoubleSide, FrontSide, Texture, SRGBColorSpace,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { hash2 } from '../rules/rng';
+import { hash2, valueNoise } from '../rules/rng';
 import type { Terrain } from '../rules/constants';
 
 interface Part { geometry: BufferGeometry; material: Material; tintable: boolean }
@@ -12,8 +12,8 @@ interface Model { name: string; parts: Part[]; minY: number; height: number; tar
 
 // پالت طبیعی برای رنگ‌های نام‌دار Kenney (پیش‌فرضشان فیروزه‌ای/نارنجی است)
 const KENNEY_COLORS: Record<string, string> = {
-  leafsGreen: '#63b64a', leafsDark: '#3f8a4c', woodBark: '#8a5a3c', woodBarkDark: '#6e4530', woodInner: '#d9b48c',
-  dirt: '#a08a72', grass: '#6cbc4b', stone: '#a8a19a', colorRed: '#d9534f', colorTan: '#e0b47a', colorYellow: '#f2c14e', colorPurple: '#9b6fd6', _defaultMat: '#efe9df',
+  leafsGreen: '#5f9d49', leafsDark: '#3d7a48', woodBark: '#75553f', woodBarkDark: '#5c4132', woodInner: '#cfa981',
+  dirt: '#96836e', grass: '#6aa74c', stone: '#a09991', colorRed: '#c9524e', colorTan: '#d6ac78', colorYellow: '#e6b64c', colorPurple: '#8f68c4', _defaultMat: '#e8e2d8',
 };
 
 interface Lib { base: string; names: string[]; targetH: Record<string, number> }
@@ -28,7 +28,7 @@ const KENNEY: Lib = {
     'stump_round', 'stump_old', 'log', 'log_large', 'plant_bush', 'plant_bushLarge', 'plant_bushDetailed', 'grass', 'grass_large', 'grass_leafs',
     'flower_redA', 'flower_yellowA', 'flower_purpleA', 'flower_redB', 'flower_yellowB', 'mushroom_red', 'mushroom_tan', 'mushroom_redGroup', 'lily_large', 'lily_small',
   ],
-  targetH: { tree_pineTall: 2.9, tree_pine: 2.3, tree_pineSmall: 1.5, tree_pineGround: 1.1, tree_tall: 2.6, tree_: 2.2, rock_tall: 1.2, rock_large: 0.42, rock_small: 0.22, stone_tall: 1.3, stone_large: 0.42, stone_small: 0.22, stump: 0.28, log: 0.22, plant: 0.32, grass: 0.3, flower: 0.3, mushroom: 0.22, lily: 0.1 },
+  targetH: { tree_pineTall: 2.3, tree_pine: 1.9, tree_pineSmall: 1.2, tree_pineGround: 0.9, tree_tall: 2.0, tree_: 1.7, rock_tall: 1.2, rock_large: 0.42, rock_small: 0.22, stone_tall: 1.3, stone_large: 0.42, stone_small: 0.22, stump: 0.28, log: 0.22, plant: 0.32, grass: 0.3, flower: 0.3, mushroom: 0.22, lily: 0.1 },
 };
 const QUATERNIUS: Lib = {
   base: 'assets/models/',
@@ -37,7 +37,7 @@ const QUATERNIUS: Lib = {
 };
 
 const GROUPS: Record<string, string[]> = {
-  tree: ['tree_default', 'tree_oak', 'tree_detailed', 'tree_fat', 'tree_tall', 'tree_thin', 'tree_plateau', 'tree_blocks', 'tree_simple'],
+  tree: ['tree_oak', 'tree_detailed', 'tree_detailed', 'tree_tall', 'tree_thin', 'tree_simple', 'tree_default'],
   pine: ['tree_pineDefaultA', 'tree_pineDefaultB', 'tree_pineTallA', 'tree_pineTallB', 'tree_pineTallC', 'tree_pineTallD', 'tree_pineRoundA', 'tree_pineRoundB', 'tree_pineRoundC'],
   pineSmall: ['tree_pineSmallA', 'tree_pineSmallB', 'tree_pineGroundA', 'tree_pineGroundB'],
   darkTree: ['tree_default_dark', 'tree_thin_dark', 'tree_tall_dark', 'tree_simple_dark', 'tree_plateau_dark'],
@@ -138,7 +138,10 @@ export class Scenery {
       let salt = 0;
       for (const sp of spawns) {
         salt += 17;
-        if (hash2(x, y, seed + salt) >= sp.chance) continue;
+        // جنگل‌های لکه‌ای: تراکم درخت با نویز کم‌بسامد کم و زیاد می‌شود (به‌جای پاشیدن یکنواخت)
+        const clustered = /tree|pine|dead/i.test(sp.group);
+        const density = clustered ? Math.max(0, Math.min(2.2, (valueNoise(x / 9, y / 9, seed + 77) - 0.3) * 3.2)) : 1;
+        if (hash2(x, y, seed + salt) >= sp.chance * density) continue;
         const names = GROUPS[sp.group];
         const name = names[Math.floor(hash2(x, y, seed + salt + 1) * names.length)];
         const model = this.models.get(name); if (!model) continue;
@@ -167,7 +170,8 @@ export class Scenery {
           const tint = part.tintable ? (sp.leafTint && /leaf/i.test((part.material as any).name || '') ? sp.leafTint : sp.tint) : undefined;
           // تنوع ملایم روشنایی هر نمونه
           const v = 0.9 + hash2(x, y, seed + salt + 6) * 0.2;
-          this.tmpC.setRGB(v, v, v); if (tint) this.tmpC.multiply(tint);
+          const hue = (hash2(x, y, seed + salt + 7) - 0.5) * 0.12;
+          this.tmpC.setRGB(v * (1 + hue), v, v * (1 - hue)); if (tint) this.tmpC.multiply(tint);
           im.setColorAt(idx, this.tmpC);
           im.count = idx + 1;
         }

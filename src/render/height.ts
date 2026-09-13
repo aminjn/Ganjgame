@@ -63,8 +63,12 @@ export function makeHeight(terrain: TerrainFn, seed: number) {
       const h = height(wx, wz) - roll(wx, wz);
       if (h > 1.55) out.lerp(SNOW, Math.min(1, (h - 1.55) * 1.6));
     }
-    // تغییر خیلی ملایم روشنایی (کم‌کنتراست) — وجه‌به‌وجه، تا حس low-poly بدهد
-    const v = 1 + (hash2(Math.floor(wx), Math.floor(wz), seed + 42) - 0.5) * 0.06;
+    // سایه‌ی محیطی ارزان: نقاط پایین‌تر از میانگین همسایه‌ها کمی تیره‌تر (فرورفتگی) و زیر آب تیره‌تر
+    const h = height(wx, wz);
+    const avg = (height(wx + 1.5, wz) + height(wx - 1.5, wz) + height(wx, wz + 1.5) + height(wx, wz - 1.5)) / 4;
+    const ao = Math.max(0, Math.min(0.28, (avg - h) * 0.35));
+    const under = Math.max(0, Math.min(0.35, (water(wx, wz) - h) * 0.9));
+    const v = (1 - ao - under) * (1 + (hash2(Math.floor(wx), Math.floor(wz), seed + 42) - 0.5) * 0.05);
     out.multiplyScalar(v);
     return out;
   };

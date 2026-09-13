@@ -7,12 +7,16 @@ import type { Terrain } from '../rules/constants';
 import { makeHeight, type TerrainFn } from './height';
 import { TerrainChunks } from './terrainMesh';
 import { Scenery } from './scenery';
-import { makeCamp, makeCaravan, makeTomb, makeTreasure, makeSelection, makeLabel, buildOwnedOverlay, makeFlag, disposeObject } from './markers';
+import { makeCamp, makeCaravan, makeTomb, makeTreasure, makeSelection, makeLabel, buildOwnedOverlay, makeFlag, disposeObject, loadProps } from './markers';
+import { Units } from './units';
+import type { UnitType } from '../rules/constants';
 import { makeComposer } from './post';
 import { PLAYER_COLOR, CLAN_COLOR } from './palette';
 
 export interface P { x: number; y: number }
 export interface Markers {
+  caravanUnits: Record<UnitType, number>;
+  guardians: { x: number; y: number; type: UnitType }[];
   camp: P | null;
   clanCamp: P | null;
   caravan: { from: P; to: P; progress: number; clan: boolean } | null;
@@ -38,6 +42,8 @@ export class World {
   private chunks!: TerrainChunks;
   private H!: ReturnType<typeof makeHeight>;
   private scenery: Scenery;
+  private units = new Units();
+  private lastFrame = performance.now();
   private terrainGroup = new Group();
   private markerGroup = new Group();
   private ownedMesh: Mesh | null = null;
@@ -61,6 +67,7 @@ export class World {
   private drag: { x: number; y: number; moved: boolean; tx: number; tz: number } | null = null;
   private pinch: { d: number; zoom: number } | null = null;
   private markers: Markers | null = null;
+  private lastHeading = 0;
   private t0 = performance.now();
   private terrainFn: TerrainFn = () => 'safe';
   private skipFn: (x: number, y: number) => boolean = () => false;
@@ -104,6 +111,7 @@ export class World {
     this.selection.visible = false; this.markerGroup.add(this.selection);
     this.scenery = new Scenery(mobile);
     this.scene.add(this.scenery.group);
+    this.scene.add(this.units.group);
 
     this.composer = makeComposer(this.renderer, this.scene, this.camera, 2, 2, mobile);
     this.resize();
@@ -111,7 +119,14 @@ export class World {
     this.bindInput();
   }
 
-  async init() { await this.scenery.load(); this.lastLoad.set(-9999, -9999); }
+  async init() {
+    await Promise.all([this.scenery.load(), this.units.load(), loadProps()]);
+    // نشانه‌ها با پراپ‌های واقعی از نو ساخته شوند
+    for (const o of [this.campObj, this.clanCampObj, this.treasureObj, ...this.tombObjs]) if (o) { this.markerGroup.remove(o); disposeObject(o); }
+    this.campObj = null; this.clanCampObj = null; this.treasureObj = null; this.tombObjs = [];
+    this.lastLoad.set(-9999, -9999);
+    if (this.markers) this.setMarkers(this.markers);
+  }
 
   setTerrain(fn: TerrainFn, seed: number, skip: (x: number, y: number) => boolean) {
     this.terrainFn = fn; this.seed = seed; this.skipFn = skip;
@@ -163,6 +178,7 @@ export class World {
     if (!this.treasureObj) { this.treasureObj = makeTreasure(); this.markerGroup.add(this.treasureObj); }
     place(this.treasureObj, m.treasure);
     if (m.participation) { if (!this.participationObj) { this.participationObj = makeFlag(new Color('#7CFC9A')); this.markerGroup.add(this.participationObj); } place(this.participationObj, m.participation); }
+    const view = this.viewBounds();
     // کاروان
     const car = m.caravan ?? (m.caravanIdle ? { from: m.caravanIdle.at, to: m.caravanIdle.at, progress: 0, clan: m.caravanIdle.clan } : null);
     if (car) {
@@ -171,11 +187,18 @@ export class World {
         this.caravanObj = makeCaravan(car.clan ? CLAN_COLOR : PLAYER_COLOR); this.caravanObj.userData.clan = car.clan; this.markerGroup.add(this.caravanObj);
       }
       const x = car.from.x + (car.to.x - car.from.x) * car.progress + 0.5, z = car.from.y + (car.to.y - car.from.y) * car.progress + 0.5;
-      this.caravanObj.position.set(x, this.heightAt(x, z) + 0.02, z);
-    } else if (this.caravanObj) { this.markerGroup.remove(this.caravanObj); this.caravanObj = null; }
+      const h = this.heightAt(x, z);
+      this.caravanObj.position.set(x, h + 0.02, z);
+      const dx = car.to.x - car.from.x, dz = car.to.y - car.from.y;
+      const heading = (dx || dz) ? Math.atan2(dx, dz) : this.lastHeading;
+      this.lastHeading = heading;
+      this.units.setCaravan(x, h + 0.02, z, heading, m.caravanUnits, !!m.caravan, true);
+    } else { if (this.caravanObj) { this.markerGroup.remove(this.caravanObj); this.caravanObj = null; } this.units.setCaravan(0, 0, 0, 0, m.caravanUnits, false, false); }
+    // نگاهبان‌ها روی خانه‌های تصاحب‌شده‌ی داخل دید
+    const gv = m.guardians.filter(g => g.x >= view.minX - 2 && g.x <= view.maxX + 2 && g.y >= view.minZ - 2 && g.y <= view.maxZ + 2);
+    this.units.setGuardians(gv.map(g => { const gx = g.x + 0.5 + Math.sin(g.x * 12.9 + g.y * 3.1) * 0.22, gz = g.y + 0.5 + Math.cos(g.x * 5.3 + g.y * 7.7) * 0.22; return { x: gx, y: this.heightAt(gx, gz), z: gz, type: g.type, rot: (g.x * 7 + g.y * 13) % 6.28 }; }));
     // خانه‌های خودی
     if (this.ownedMesh) { this.markerGroup.remove(this.ownedMesh); this.ownedMesh.geometry.dispose(); this.ownedMesh = null; }
-    const view = this.viewBounds();
     const vis = m.owned.filter(o => o.x >= view.minX - 2 && o.x <= view.maxX + 2 && o.y >= view.minZ - 2 && o.y <= view.maxZ + 2);
     if (vis.length) { this.ownedMesh = buildOwnedOverlay(vis, (x, z) => this.heightAt(x, z)); this.markerGroup.add(this.ownedMesh); }
     // مسیر با شماره‌ی قدم و نشان مقصد
@@ -233,13 +256,15 @@ export class World {
   private animate = () => {
     this.raf = requestAnimationFrame(this.animate);
     const t = (performance.now() - this.t0) / 1000;
+    const nowMs = performance.now(); const dt = Math.min(0.1, (nowMs - this.lastFrame) / 1000); this.lastFrame = nowMs;
+    this.units.update(dt);
     if (this.followTarget && this.followFrames > 0) { this.target.lerp(this.followTarget, 0.12); this.followFrames--; }
     this.updateCamera();
     this.loadAround();
     const pulse = 0.9 + Math.sin(t * 4) * 0.1;
     this.selection.scale.setScalar(pulse);
-    for (const tb of this.tombObjs) { const cap = tb.userData.cap as Mesh; cap.rotation.y = t; cap.position.y = 1.05 + Math.sin(t * 2) * 0.05; }
-    if (this.treasureObj) { const gem = this.treasureObj.userData.gem as Mesh; gem.rotation.y = t * 1.3; gem.position.y = 0.78 + Math.sin(t * 2.2) * 0.06; }
+    for (const tb of this.tombObjs) { const cap = tb.userData.cap as Mesh; cap.rotation.y = t; cap.position.y = (tb.userData.capBase ?? (tb.userData.capBase = cap.position.y)) + Math.sin(t * 2) * 0.05; }
+    if (this.treasureObj) { const gem = this.treasureObj.userData.gem as Mesh; gem.rotation.y = t * 1.3; gem.position.y = (this.treasureObj.userData.gemBase ?? (this.treasureObj.userData.gemBase = gem.position.y)) + Math.sin(t * 2.2) * 0.06; }
     if (this.caravanObj) { this.caravanObj.position.y += 0; (this.caravanObj.userData.ring as Mesh).scale.setScalar(pulse); }
     const s = performance.now();
     this.composer.composer.render();

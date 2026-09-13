@@ -3,11 +3,45 @@ import {
   Group, Mesh, ConeGeometry, CylinderGeometry, BoxGeometry, MeshLambertMaterial, MeshBasicMaterial, Sprite, SpriteMaterial, CanvasTexture,
   BufferGeometry, Float32BufferAttribute, DoubleSide, Color, OctahedronGeometry, PlaneGeometry, SRGBColorSpace, TorusGeometry, Object3D,
 } from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { PLAYER_COLOR, CLAN_COLOR, TOMB_GLOW, TREASURE_GLOW, SELECT_COLOR } from './palette';
+
+// پراپ‌های CC0 (Kenney Nature Kit، KayKit Dungeon) — با fallback به هندسه‌ی ساده اگر بارگذاری نشد
+const PROPS = new Map<string, Object3D>();
+const PROP_COLORS: Record<string, string> = { dirt: '#96836e', grass: '#6aa74c', stone: '#a09991', woodBark: '#75553f', woodInner: '#cfa981', colorRed: '#c9524e', colorTan: '#d6ac78', colorYellow: '#e6b64c', leafsGreen: '#5f9d49', _defaultMat: '#e8e2d8', snow: '#f2efe8' };
+export async function loadProps(base = 'assets/models/props/') {
+  const loader = new GLTFLoader();
+  await Promise.all(['tent_detailedOpen', 'campfire_logs', 'statue_obelisk', 'statue_head', 'statue_block', 'chest_gold', 'torch_lit', 'column', 'rubble_half'].map(async n => {
+    try {
+      const g = await loader.loadAsync(base + n + '.glb');
+      g.scene.traverse((o: any) => {
+        if (!o.isMesh) return;
+        const src = o.material; const name: string = src?.name ?? '';
+        const map = src?.map ?? null; if (map) map.colorSpace = SRGBColorSpace;
+        const color = PROP_COLORS[name] ? new Color(PROP_COLORS[name]) : (src?.color ? src.color.clone() : new Color(0xffffff));
+        o.material = new MeshLambertMaterial({ map: PROP_COLORS[name] ? null : map, color, flatShading: !map });
+        o.castShadow = true; o.receiveShadow = true;
+      });
+      PROPS.set(n, g.scene);
+    } catch (e) { console.warn('prop', n, e); }
+  }));
+}
+function prop(name: string, scale: number): Object3D | null {
+  const p = PROPS.get(name); if (!p) return null;
+  const o = p.clone(); o.scale.setScalar(scale); return o;
+}
 import { faDigits } from '../rules/format';
 
 export function makeCamp(color: Color): Group {
   const g = new Group();
+  const tent0 = prop('tent_detailedOpen', 1.35);
+  if (tent0) {
+    tent0.rotation.y = Math.PI * 0.85; g.add(tent0);
+    const fire = prop('campfire_logs', 1.0); if (fire) { fire.position.set(0.62, 0, 0.42); g.add(fire); }
+    const flag = makeFlag(color); flag.position.set(-0.55, 0, 0.45); g.add(flag);
+    const ring = new Mesh(new TorusGeometry(0.8, 0.035, 6, 32), new MeshBasicMaterial({ color })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.03; g.add(ring);
+    return g;
+  }
   const tent = new Mesh(new ConeGeometry(0.5, 0.7, 5), new MeshLambertMaterial({ color, flatShading: true }));
   tent.position.y = 0.36; tent.castShadow = true; g.add(tent);
   const base = new Mesh(new CylinderGeometry(0.5, 0.55, 0.08, 8), new MeshLambertMaterial({ color: '#5a4636' }));
@@ -28,11 +62,6 @@ export function makeFlag(color: Color): Group {
 export function makeCaravan(color: Color): Group {
   const g = new Group();
   const flag = makeFlag(color); g.add(flag);
-  const body = new MeshLambertMaterial({ color: '#f2e6c8', flatShading: true });
-  for (let i = 0; i < 3; i++) {
-    const m = new Mesh(new ConeGeometry(0.11, 0.26, 5), body);
-    m.position.set(-0.22 + i * 0.22, 0.13, 0.22 - (i % 2) * 0.16); m.castShadow = true; g.add(m);
-  }
   const ring = new Mesh(new TorusGeometry(0.5, 0.03, 6, 24), new MeshBasicMaterial({ color }));
   ring.rotation.x = Math.PI / 2; ring.position.y = 0.03; g.add(ring);
   g.userData.ring = ring;
@@ -41,6 +70,16 @@ export function makeCaravan(color: Color): Group {
 
 export function makeTomb(): Group {
   const g = new Group();
+  const ob = prop('statue_obelisk', 1.7);
+  if (ob) {
+    g.add(ob);
+    const head = prop('statue_head', 1.0); if (head) { head.position.set(0.5, 0, 0.36); head.rotation.y = -0.6; g.add(head); }
+    const blk = prop('statue_block', 0.9); if (blk) { blk.position.set(-0.48, 0, 0.36); blk.rotation.y = 0.4; g.add(blk); }
+    const rub = prop('rubble_half', 0.45); if (rub) { rub.position.set(0.1, 0, -0.5); g.add(rub); }
+    const cap = new Mesh(new OctahedronGeometry(0.13, 0), new MeshBasicMaterial({ color: TOMB_GLOW }));
+    cap.position.y = 1.75; g.add(cap); g.userData.cap = cap;
+    return g;
+  }
   const stone = new Mesh(new BoxGeometry(0.34, 0.9, 0.34), new MeshLambertMaterial({ color: '#3d3546', flatShading: true }));
   stone.position.y = 0.45; stone.castShadow = true; g.add(stone);
   const cap = new Mesh(new OctahedronGeometry(0.16, 0), new MeshBasicMaterial({ color: TOMB_GLOW }));
@@ -53,6 +92,18 @@ export function makeTomb(): Group {
 
 export function makeTreasure(): Group {
   const g = new Group();
+  const ch = prop('chest_gold', 0.7);
+  if (ch) {
+    ch.rotation.y = Math.PI; g.add(ch);
+    for (const [x, z] of [[-0.55, -0.3], [0.55, -0.3]]) { const t = prop('torch_lit', 0.5); if (t) { t.position.set(x, 0, z); g.add(t); } }
+    const c1 = prop('column', 0.45); if (c1) { c1.position.set(-0.6, 0, 0.45); g.add(c1); }
+    const c2 = prop('column', 0.45); if (c2) { c2.position.set(0.6, 0, 0.45); g.add(c2); }
+    const gem = new Mesh(new OctahedronGeometry(0.16, 0), new MeshBasicMaterial({ color: TREASURE_GLOW }));
+    gem.position.y = 0.95; g.add(gem); g.userData.gem = gem;
+    const pedestal = new Mesh(new CylinderGeometry(0.95, 1.05, 0.14, 8), new MeshLambertMaterial({ color: '#c9a95c', flatShading: true }));
+    pedestal.position.y = 0.06; g.add(pedestal);
+    return g;
+  }
   const chest = new Mesh(new BoxGeometry(0.6, 0.4, 0.42), new MeshLambertMaterial({ color: '#7a4b23', flatShading: true }));
   chest.position.y = 0.2; chest.castShadow = true; g.add(chest);
   const lid = new Mesh(new BoxGeometry(0.62, 0.14, 0.44), new MeshLambertMaterial({ color: '#9a6330', flatShading: true }));

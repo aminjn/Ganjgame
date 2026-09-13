@@ -15,6 +15,7 @@ npm run dev        # http://localhost:5173  (بازی)  ·  /admin.html (پنل 
 npm test           # تست‌های قوانین (vitest)
 npm run build      # خروجی تولید در dist/
 npm run assets <مسیر Stylized Nature MegaKit>/glTF   # بازسازی GLBها از منبع
+npm run characters <مسیر KayKit Adventurers>/Characters/gltf   # ساخت کاراکترهای سبک
 ```
 
 ## ساختار
@@ -28,11 +29,12 @@ npm run assets <مسیر Stylized Nature MegaKit>/glTF   # بازسازی GLBه�
 | `src/rules/level.ts` | منحنی سطح (۱۲۰ × ۱٫۵؛ سطح ۵=۹۷۵، ۷=۲٬۴۹۵، ۱۰=۸٬۹۹۳) |
 | `src/rules/tombs.ts`، `camp.ts`، `path.ts`، `economy.ts` | مقبره‌ها، کمپ اولیه، کم‌هزینه‌ترین راه، ارزش جایزه‌ها |
 | `src/rules/state.ts` | وضعیت بازی و همه‌ی کنش‌ها (خرید، کوچ، جنگ، تصاحب، آرتیفکت، گنج، پایان فصل، کلن، کیف پول)، امضا و سخت‌گیری |
+| `src/render/units.ts` | نیروها روی نقشه: کاروان با پیکره‌ی هر نوع نیرو و برچسب تعداد (انیمیشن راه‌رفتن/ایستادن)، نگاهبان‌ها به‌صورت Instanced روی خانه‌های تصاحب‌شده |
 | `src/render/` | Three.js: زمین مش flat-shaded با رنگ رأس (تپه، کوه با قله‌ی روشن، مرداب با آب، دره)، صحنه‌آرایی Instanced از مدل‌های CC0، خورشید ۳۵° با سایه‌ی ۴K، دوربین ثابت ۵۵°/fov 30، MSAA، بلوم/وینیت/گرید |
 | `src/ui/app.ts` | رابط فارسی راست‌به‌چپ: هدر، تب‌ها، کارت خانه، نمای کل سرزمین، مودال نام و آموزش |
 | `src/admin.ts` + `admin.html` | پنل ادمین شش‌تبه (وضعیت و امنیت · فصل و نقشه · اعداد · پرونده‌ی بازیکن · پشتیبانی · تنظیمات ذخیره‌شده) |
 | `faq.html` | ۲۶ پرسش در ۷ دسته |
-| `public/assets/models/` | مدل‌های CC0: «Quaternius — Stylized Nature MegaKit» (صخره، بوته، گیاه، گل) و «Kenney — Nature Kit» در `kenney/` (درخت‌ها و صخره‌های low-poly) |
+| `public/assets/models/` | مدل‌های CC0: «Quaternius — Stylized Nature MegaKit» (صخره، بوته، گیاه، گل)، «Kenney — Nature Kit» در `kenney/` (درخت‌ها و صخره‌ها)، «KayKit — Adventurers» در `kaykit/` (پیکره‌ی نیروها)، پراپ‌ها در `props/` (صندوق گنج، چادر، مقبره، سلاح) |
 | `tests/` | تست‌های زمین، قوانین، وضعیت |
 
 ## کلیدهای ذخیره‌سازی (localStorage)

@@ -258,7 +258,10 @@ export class Game {
       void act;
     } else if (a.pos) caravanIdle = { at: a.pos, clan: st.control === 'clan' };
     const owned = Object.entries(st.owned).map(([k, o]) => { const [x, y] = k.split(',').map(Number); return { x, y, clan: o.owner === 'clan' }; });
+    const guardians = Object.entries(st.owned).filter(([, o]) => o.guardian).map(([k, o]) => { const [x, y] = k.split(',').map(Number); return { x, y, type: o.guardian! }; });
+    const caravanUnits = m ? S.actorOf(st, m.actor).units : a.units;
     this.world.setMarkers({
+      caravanUnits, guardians,
       camp: st.player.camp, clanCamp: st.clan?.camp ?? null, caravan, caravanIdle, tombs: st.tombs.filter(t => !t.captured).map(t => ({ x: t.x, y: t.y })),
       owned, treasure: { x: C.CENTER, y: C.CENTER }, path, participation: st.participation?.tile ?? null,
     });
