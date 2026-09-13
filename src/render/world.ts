@@ -30,7 +30,7 @@ export interface Markers {
 
 const PITCH = 55 * Math.PI / 180;
 const FOV = 30;
-const SUN_ELEV = 35 * Math.PI / 180;
+const SUN_ELEV = 42 * Math.PI / 180;
 const SUN_AZ = 150 * Math.PI / 180;
 
 export class World {
@@ -85,16 +85,16 @@ export class World {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = PCFSoftShadowMap;
     this.renderer.toneMapping = NeutralToneMapping;
-    this.renderer.toneMappingExposure = 1.08;
+    this.renderer.toneMappingExposure = 1.0;
     this.renderer.outputColorSpace = SRGBColorSpace;
 
     this.camera = new PerspectiveCamera(FOV, 1, 1, 400);
-    const bg = new Color('#bfd6ea');
+    const bg = new Color('#a9dcec');
     this.scene.background = bg;
     this.scene.fog = new Fog(bg, 60, 160);
 
     // خورشید گرم با زاویه‌ی کم (~۳۵ درجه) — سایه‌های بلند و خوانا
-    this.sun = new DirectionalLight(new Color('#ffe2bd'), 3.1);
+    this.sun = new DirectionalLight(new Color('#fff1d6'), 2.6);
     this.sun.castShadow = true;
     const sm = mobile ? 2048 : 4096;
     this.sun.shadow.mapSize.set(sm, sm);
@@ -103,7 +103,7 @@ export class World {
     this.sun.shadow.camera.near = 1; this.sun.shadow.camera.far = 220;
     this.scene.add(this.sun); this.scene.add(this.sun.target);
     // نور محیطی سرد و نرم: سایه‌ها آبی‌فام، نه سیاه
-    this.scene.add(new HemisphereLight(new Color('#c9dcff'), new Color('#7d8c62'), 1.15));
+    this.scene.add(new HemisphereLight(new Color('#dbeeff'), new Color('#8ea06a'), 1.5));
 
     this.scene.add(this.terrainGroup);
     this.scene.add(this.markerGroup);

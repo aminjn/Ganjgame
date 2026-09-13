@@ -7,15 +7,16 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
 const GradeShader = {
-  uniforms: { tDiffuse: { value: null }, vignette: { value: 0.3 }, warmth: { value: 0.05 } },
+  uniforms: { tDiffuse: { value: null }, vignette: { value: 0.16 }, warmth: { value: 0.03 }, saturation: { value: 1.18 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform float vignette; uniform float warmth; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform float vignette; uniform float warmth; uniform float saturation; varying vec2 vUv;
     void main(){
       vec4 c = texture2D(tDiffuse, vUv);
       // گرید گرم: کمی قرمز/زرد بیشتر، کمی آبی کمتر؛ کنتراست خیلی ملایم
       c.rgb *= vec3(1.0 + warmth, 1.0 + warmth * 0.45, 1.0 - warmth * 0.6);
-      c.rgb = (c.rgb - 0.5) * 1.06 + 0.5;
+      float l = dot(c.rgb, vec3(0.299, 0.587, 0.114)); c.rgb = mix(vec3(l), c.rgb, saturation);
+      c.rgb = (c.rgb - 0.5) * 1.05 + 0.5;
       vec2 d = vUv - 0.5; float v = 1.0 - dot(d, d) * vignette * 2.2;
       c.rgb *= clamp(v, 0.0, 1.0);
       gl_FragColor = c;

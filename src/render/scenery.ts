@@ -1,8 +1,9 @@
 // صحنه‌آرایی low-poly با مدل‌های CC0: درخت‌ها و سنگ‌های Kenney Nature Kit (flat-shaded، رنگ تخت) + بوته/گیاه/سنگریزه‌ی Quaternius.
 // پراکندگی با آفست زیرکاشی، چرخش و مقیاس تصادفی — هیچ‌چیز با شبکه هم‌راستا نیست.
 import {
-  BufferGeometry, Color, InstancedMesh, Material, MeshLambertMaterial, Object3D, Group, Box3, Vector3, Mesh, DoubleSide, FrontSide, Texture, SRGBColorSpace,
+  BufferGeometry, Color, InstancedMesh, Material, MeshPhongMaterial, Object3D, Group, Box3, Vector3, Mesh, DoubleSide, FrontSide, Texture, SRGBColorSpace,
 } from 'three';
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { hash2, valueNoise } from '../rules/rng';
 import type { Terrain } from '../rules/constants';
@@ -12,8 +13,8 @@ interface Model { name: string; parts: Part[]; minY: number; height: number; tar
 
 // پالت طبیعی برای رنگ‌های نام‌دار Kenney (پیش‌فرضشان فیروزه‌ای/نارنجی است)
 const KENNEY_COLORS: Record<string, string> = {
-  leafsGreen: '#5f9d49', leafsDark: '#3d7a48', woodBark: '#75553f', woodBarkDark: '#5c4132', woodInner: '#cfa981',
-  dirt: '#96836e', grass: '#6aa74c', stone: '#a09991', colorRed: '#c9524e', colorTan: '#d6ac78', colorYellow: '#e6b64c', colorPurple: '#8f68c4', _defaultMat: '#e8e2d8',
+  leafsGreen: '#5cb83a', leafsDark: '#3f9a4a', woodBark: '#8a5d3c', woodBarkDark: '#6d4732', woodInner: '#e0bb8f',
+  dirt: '#b9a184', grass: '#6dbb45', stone: '#b9b2a8', colorRed: '#e0524c', colorTan: '#e6bd85', colorYellow: '#f4c04a', colorPurple: '#9c6fd8', _defaultMat: '#f0ebe2',
 };
 
 interface Lib { base: string; names: string[]; targetH: Record<string, number> }
@@ -86,8 +87,13 @@ export class Scenery {
         gltf.scene.traverse((o: Object3D) => {
           const m = o as Mesh;
           if (!m.isMesh) return;
-          const g = m.geometry.clone(); g.applyMatrix4(m.matrixWorld);
-          if (!g.getAttribute('normal')) g.computeVertexNormals();
+          let g = m.geometry.clone(); g.applyMatrix4(m.matrixWorld);
+          // سایه‌زنی نرم و گرد (سبک CoC): رأس‌های مشترک ادغام و نرمال‌ها نرم می‌شوند
+          if (lib === KENNEY) {
+            g.deleteAttribute('normal'); if (g.getAttribute('color')) g.deleteAttribute('color');
+            try { g = mergeVertices(g, 1e-4); } catch { /* هندسه‌ی کوانتیزه: ادغام ممکن نیست */ }
+            g.computeVertexNormals();
+          } else if (!g.getAttribute('normal')) g.computeVertexNormals();
           const src = m.material as any;
           const mname: string = src.name || '';
           const map: Texture | null = src.map ?? null;
@@ -100,7 +106,8 @@ export class Scenery {
           else if (src.alphaTest > 0 || /grass|flower|petal|plant|fern|clover|mushroom/i.test(mname + name)) { color = new Color(0xffffff); cutout = true; flat = false; }
           else { color = src.color ? src.color.clone() : new Color(0xffffff); }
           const useMap = !!map && !KENNEY_COLORS[mname] && !/rock|pebble/i.test(name);
-          const mat = new MeshLambertMaterial({ map: useMap ? map : null, color, alphaTest: cutout ? 0.4 : 0, side: cutout ? DoubleSide : FrontSide, flatShading: flat });
+          const mat = new MeshPhongMaterial({ map: useMap ? map : null, color, alphaTest: cutout ? 0.4 : 0, side: cutout ? DoubleSide : FrontSide, shininess: 18, specular: new Color('#2a2a2a') });
+          void flat;
           mat.name = mname;
           parts.push({ geometry: g, material: mat, tintable: /leaf|grass|stone|rock|dirt|bark|wood/i.test(mname + name) });
         });

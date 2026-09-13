@@ -1,7 +1,7 @@
 // نشانه‌های تعاملی: کمپ، کاروان، مقبره، گنج، خانه‌های خودی، انتخاب، مسیر — روشن‌تر و پرکنتراست‌تر از زمین.
 import {
   Group, Mesh, ConeGeometry, CylinderGeometry, BoxGeometry, MeshLambertMaterial, MeshBasicMaterial, Sprite, SpriteMaterial, CanvasTexture,
-  BufferGeometry, Float32BufferAttribute, DoubleSide, Color, OctahedronGeometry, PlaneGeometry, SRGBColorSpace, TorusGeometry, Object3D,
+  BufferGeometry, Float32BufferAttribute, DoubleSide, Color, OctahedronGeometry, PlaneGeometry, SRGBColorSpace, TorusGeometry, Object3D, MeshPhongMaterial,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { PLAYER_COLOR, CLAN_COLOR, TOMB_GLOW, TREASURE_GLOW, SELECT_COLOR } from './palette';
@@ -19,7 +19,7 @@ export async function loadProps(base = 'assets/models/props/') {
         const src = o.material; const name: string = src?.name ?? '';
         const map = src?.map ?? null; if (map) map.colorSpace = SRGBColorSpace;
         const color = PROP_COLORS[name] ? new Color(PROP_COLORS[name]) : (src?.color ? src.color.clone() : new Color(0xffffff));
-        o.material = new MeshLambertMaterial({ map: PROP_COLORS[name] ? null : map, color, flatShading: !map });
+        o.material = new MeshPhongMaterial({ map: PROP_COLORS[name] ? null : map, color, shininess: 16, specular: new Color('#2a2a2a') });
         o.castShadow = true; o.receiveShadow = true;
       });
       PROPS.set(n, g.scene);

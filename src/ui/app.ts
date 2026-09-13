@@ -322,7 +322,7 @@ export class Game {
           action += `<div class="kv"><span>نوع</span><span>${kindLabel}</span><span>تدارکات</span><span>${num(p.cost)} سکه</span><span>زمان تقریبی</span><span>${secs(p.seconds)}</span>`;
           if (p.encounters.count) action += `<span>خانه‌های موجوددار در مسیر</span><span>${num(p.encounters.count)}</span><span>مجموع قدرت موجودات</span><span>${num(p.encounters.totalPower)}</span><span>سخت‌ترین خانه</span><span>(${num(p.encounters.hardest!.x)}، ${num(p.encounters.hardest!.y)}) با ${num(p.encounters.hardest!.power)}</span>`;
           action += `<span>قدرت لشگر تو</span><span>${num(p.army, 1)}${p.encounters.hardest && p.army < p.encounters.hardest.power / s.difficulty ? ' ⚠' : ''}</span></div>`;
-          action += `<div class="row"><button class="primary" data-act="move">${p.kind === 'free' ? 'سفر' : 'کوچ'}</button>${st.clan && !st.clan.camp && info.o?.owner === 'player' && st.clan.commander === st.player.name ? '<button data-act="setClanCamp">کمپ کلن این‌جا</button>' : ''}</div>`;
+          action += `<div class="row"><button class="gold" data-act="move">${p.kind === 'free' ? 'سفر' : 'کوچ'}</button>${st.clan && !st.clan.camp && info.o?.owner === 'player' && st.clan.commander === st.player.name ? '<button data-act="setClanCamp">کمپ کلن این‌جا</button>' : ''}</div>`;
         } else {
           action += `<p class="${plan.reason === 'کاروان همین‌جاست' ? 'muted' : 'warn'}">${esc(plan.reason)}</p>`;
           if (st.clan && !st.clan.camp && info.o?.owner === 'player' && st.clan.commander === st.player.name) action += `<div class="row"><button data-act="setClanCamp">کمپ کلن این‌جا</button></div>`;
@@ -389,7 +389,7 @@ export class Game {
   shopHtml() {
     const st = this.st, s = this.s, id = st.control;
     const items = ALL_UNITS.map(u => `<div class="unit"><b>${C.UNITS[u].name}</b> — ${num(s.unitPrice[u])} سکه<div class="muted">قدرت ${num(s.unitPower[u])}${C.UNITS[u].bonusTerrains.length ? '، ×' + faDigits(String(s.terrainBonus)) + ' در ' + C.UNITS[u].bonusTerrains.map(t => C.TERRAIN[t].name).join('، ') : ''}${C.UNITS[u].luck ? '، شانس ' + faDigits(String(s.explorerLuck)) : ''}${C.UNITS[u].speed ? '، ' + num(s.guidesForHalf) + ' نفر زمان کوچ را نصف می‌کند' : ''}</div>
-      <div class="qty"><input type="number" min="1" value="10" /><button class="primary" data-act="buyUnit" data-unit="${u}">خرید</button></div></div>`).join('');
+      <div class="qty"><input type="number" min="1" value="10" /><button class="gold" data-act="buyUnit" data-unit="${u}">خرید</button></div></div>`).join('');
     return `<div class="card"><h3>فروشگاه (${id === 'clan' ? 'با سکه‌ی خزانه‌ی کلن' : 'با سکه'})</h3><div class="kv"><span>${id === 'clan' ? 'خزانه' : 'سکه'}</span><span>${num(S.coinsOf(st, id))}</span></div></div>
       <div class="units">${items}</div>
       <p class="muted">آرتیفکت خریدنی از فروشگاه نیست؛ فقط با تصاحب مقبره یا معامله با بازیکن دیگر.</p>`;

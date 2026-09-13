@@ -1,6 +1,6 @@
 // نیروها روی نقشه: کاراکترهای low-poly KayKit (CC0). کاروان با انیمیشن راه‌رفتن/ایستادن و نگاهبان‌ها به‌صورت Instanced.
 import {
-  Group, Object3D, AnimationMixer, AnimationClip, SkinnedMesh, Mesh, BufferGeometry, Float32BufferAttribute, InstancedMesh, MeshLambertMaterial,
+  Group, Object3D, AnimationMixer, AnimationClip, SkinnedMesh, Mesh, BufferGeometry, Float32BufferAttribute, InstancedMesh, MeshLambertMaterial, MeshPhongMaterial,
   Texture, SRGBColorSpace, Vector3, Color, Bone, Matrix4,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -131,9 +131,9 @@ export class Units {
 function toLambert(src: any): MeshLambertMaterial {
   const map: Texture | null = src?.map ?? null;
   if (map) map.colorSpace = SRGBColorSpace;
-  const m = new MeshLambertMaterial({ map, color: src?.color ? src.color.clone() : new Color(0xffffff) });
+  const m = new MeshPhongMaterial({ map, color: src?.color ? src.color.clone() : new Color(0xffffff), shininess: 22, specular: new Color('#333333') });
   m.name = src?.name ?? '';
-  return m;
+  return m as unknown as MeshLambertMaterial;
 }
 
 // پز Idle را روی مش‌های اسکلتی می‌پزد و یک هندسه‌ی ایستا (بدون اسکلت) برای Instancing می‌سازد

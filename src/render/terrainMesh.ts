@@ -1,52 +1,48 @@
-// چانک‌های زمین: مش سه‌بعدی واقعی، flat-shaded با رنگ رأس، بدون بافت. هر کاشی دو مثلث درشت (حس low-poly).
-import { BufferGeometry, Float32BufferAttribute, Mesh, MeshLambertMaterial, Color, Group } from 'three';
+// چانک‌های زمین: مش پیوسته با سایه‌زنی نرم و رنگ رأس (سبک CoC)، بدون بافت. هر کاشی ۲×۲ زیرمربع.
+import { BufferGeometry, Float32BufferAttribute, Mesh, MeshPhongMaterial, Color, Group } from 'three';
 import type { makeHeight } from './height';
 import { hash2 } from '../rules/rng';
 import { WATER } from './palette';
 
 export const CHUNK = 16;
+const SUB = 2;
 
 export class TerrainChunks {
-  material = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
-  waterMaterial = new MeshLambertMaterial({ color: WATER, transparent: true, opacity: 0.82, flatShading: true, depthWrite: false });
+  material = new MeshPhongMaterial({ vertexColors: true, shininess: 6, specular: new Color('#1a1a1a') });
+  waterMaterial = new MeshPhongMaterial({ color: WATER, transparent: true, opacity: 0.86, shininess: 70, specular: new Color('#9fe9ff'), depthWrite: false });
   chunks = new Map<string, Group>();
   constructor(private H: ReturnType<typeof makeHeight>, private seed: number) {}
 
-  // موقعیت رأس با لرزش کوچک افقی تا چندضلعی‌ها نامنظم باشند (مشترک بین چانک‌ها چون از هش می‌آید)
-  private vx(i: number, j: number) { return i + (hash2(i, j, this.seed + 51) - 0.5) * 0.26; }
-  private vz(i: number, j: number) { return j + (hash2(i, j, this.seed + 52) - 0.5) * 0.26; }
+  private jx(i: number, j: number) { return (hash2(i, j, this.seed + 51) - 0.5) * 0.12; }
+  private jz(i: number, j: number) { return (hash2(i, j, this.seed + 52) - 0.5) * 0.12; }
 
   build(cx: number, cz: number): Group {
-    const n = CHUNK;
+    const n = CHUNK * SUB;
     const x0 = cx * CHUNK, z0 = cz * CHUNK;
-    const px = new Float32Array((n + 1) * (n + 1)), pz = new Float32Array((n + 1) * (n + 1)), hs = new Float32Array((n + 1) * (n + 1));
-    const cs = new Float32Array((n + 1) * (n + 1) * 3);
+    const N = (n + 1) * (n + 1);
+    const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), wpos = new Float32Array(N * 3);
     const c = new Color();
     for (let j = 0; j <= n; j++) for (let i = 0; i <= n; i++) {
       const k = j * (n + 1) + i;
-      const wx = this.vx(x0 + i, z0 + j), wz = this.vz(x0 + i, z0 + j);
-      px[k] = wx; pz[k] = wz; hs[k] = this.H.height(wx, wz);
+      const gi = x0 * SUB + i, gj = z0 * SUB + j;
+      const wx = x0 + i / SUB + this.jx(gi, gj), wz = z0 + j / SUB + this.jz(gi, gj);
+      pos[k * 3] = wx; pos[k * 3 + 1] = this.H.height(wx, wz); pos[k * 3 + 2] = wz;
+      wpos[k * 3] = wx; wpos[k * 3 + 1] = this.H.water(wx, wz); wpos[k * 3 + 2] = wz;
       this.H.color(wx, wz, c);
-      cs[k * 3] = c.r; cs[k * 3 + 1] = c.g; cs[k * 3 + 2] = c.b;
+      col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b;
     }
-    const pos: number[] = [], col: number[] = [];
-    const put = (i: number, j: number) => {
-      const k = j * (n + 1) + i;
-      pos.push(px[k], hs[k], pz[k]); col.push(cs[k * 3], cs[k * 3 + 1], cs[k * 3 + 2]);
-    };
-    const wpos: number[] = [];
-    const putW = (i: number, j: number) => { const k = j * (n + 1) + i; wpos.push(px[k], this.H.water(px[k], pz[k]), pz[k]); };
+    const idx: number[] = [], widx: number[] = [];
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
-      // قطر متغیر (هش) تا مثلث‌بندی الگوی شبکه‌ای نداشته باشد
-      if (hash2(x0 + i, z0 + j, this.seed + 53) < 0.5) { put(i, j); put(i, j + 1); put(i + 1, j); put(i + 1, j); put(i, j + 1); put(i + 1, j + 1); }
-      else { put(i, j); put(i + 1, j + 1); put(i + 1, j); put(i, j); put(i, j + 1); put(i + 1, j + 1); }
-      // آب: روی کاشی مرداب و کاشی‌های همسایه‌اش (تا ساحل داخل کاشی کناری شکل بگیرد)
-      const tx = x0 + i, tz = z0 + j;
-      if (this.H.T(tx, tz) === 'marsh') { putW(i, j); putW(i, j + 1); putW(i + 1, j); putW(i + 1, j); putW(i, j + 1); putW(i + 1, j + 1); }
+      const a = j * (n + 1) + i, b = a + 1, cc = a + (n + 1), d = cc + 1;
+      const flip = hash2(x0 * SUB + i, z0 * SUB + j, this.seed + 53) < 0.5;
+      if (flip) idx.push(a, cc, b, b, cc, d); else idx.push(a, d, b, a, cc, d);
+      const tx = x0 + Math.floor(i / SUB), tz = z0 + Math.floor(j / SUB);
+      if (this.H.T(tx, tz) === 'marsh') { if (flip) widx.push(a, cc, b, b, cc, d); else widx.push(a, d, b, a, cc, d); }
     }
     const g = new BufferGeometry();
     g.setAttribute('position', new Float32BufferAttribute(pos, 3));
     g.setAttribute('color', new Float32BufferAttribute(col, 3));
+    g.setIndex(idx);
     g.computeVertexNormals();
     g.computeBoundingSphere();
     const m = new Mesh(g, this.material);
@@ -54,9 +50,10 @@ export class TerrainChunks {
     m.userData.chunk = true;
     const grp = new Group();
     grp.add(m);
-    if (wpos.length) {
+    if (widx.length) {
       const wg = new BufferGeometry();
       wg.setAttribute('position', new Float32BufferAttribute(wpos, 3));
+      wg.setIndex(widx);
       wg.computeVertexNormals(); wg.computeBoundingSphere();
       const w = new Mesh(wg, this.waterMaterial);
       w.receiveShadow = true; w.renderOrder = 1; w.userData.water = true;
