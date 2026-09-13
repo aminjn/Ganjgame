@@ -1,0 +1,157 @@
+[
+  {
+    "name": "CommonTree_1",
+    "bytes": 292624,
+    "tris": 5903
+  },
+  {
+    "name": "CommonTree_2",
+    "bytes": 254400,
+    "tris": 5243
+  },
+  {
+    "name": "CommonTree_3",
+    "bytes": 179904,
+    "tris": 3351
+  },
+  {
+    "name": "CommonTree_4",
+    "bytes": 192364,
+    "tris": 3816
+  },
+  {
+    "name": "CommonTree_5",
+    "bytes": 165552,
+    "tris": 2968
+  },
+  {
+    "name": "Pine_1",
+    "bytes": 163592,
+    "tris": 3547
+  },
+  {
+    "name": "Pine_2",
+    "bytes": 152580,
+    "tris": 3264
+  },
+  {
+    "name": "Pine_3",
+    "bytes": 205388,
+    "tris": 4473
+  },
+  {
+    "name": "Pine_4",
+    "bytes": 149280,
+    "tris": 3041
+  },
+  {
+    "name": "Pine_5",
+    "bytes": 71260,
+    "tris": 1432
+  },
+  {
+    "name": "DeadTree_1",
+    "bytes": 248672,
+    "tris": 5604
+  },
+  {
+    "name": "DeadTree_2",
+    "bytes": 267240,
+    "tris": 5991
+  },
+  {
+    "name": "DeadTree_3",
+    "bytes": 247336,
+    "tris": 5353
+  },
+  {
+    "name": "DeadTree_4",
+    "bytes": 237176,
+    "tris": 5199
+  },
+  {
+    "name": "DeadTree_5",
+    "bytes": 231468,
+    "tris": 5115
+  },
+  {
+    "name": "Rock_Medium_1",
+    "bytes": 6484,
+    "tris": 208
+  },
+  {
+    "name": "Rock_Medium_2",
+    "bytes": 5128,
+    "tris": 156
+  },
+  {
+    "name": "Rock_Medium_3",
+    "bytes": 9080,
+    "tris": 310
+  },
+  {
+    "name": "Pebble_Round_1",
+    "bytes": 6708,
+    "tris": 136
+  },
+  {
+    "name": "Pebble_Round_2",
+    "bytes": 5300,
+    "tris": 114
+  },
+  {
+    "name": "Pebble_Round_3",
+    "bytes": 5900,
+    "tris": 128
+  },
+  {
+    "name": "Bush_Common",
+    "bytes": 60060,
+    "tris": 900
+  },
+  {
+    "name": "Bush_Common_Flowers",
+    "bytes": 100084,
+    "tris": 1338
+  },
+  {
+    "name": "Fern_1",
+    "bytes": 29484,
+    "tris": 143
+  },
+  {
+    "name": "Grass_Common_Tall",
+    "bytes": 6424,
+    "tris": 123
+  },
+  {
+    "name": "Grass_Wispy_Tall",
+    "bytes": 9564,
+    "tris": 197
+  },
+  {
+    "name": "Mushroom_Common",
+    "bytes": 16708,
+    "tris": 290
+  },
+  {
+    "name": "Flower_3_Group",
+    "bytes": 53964,
+    "tris": 277
+  },
+  {
+    "name": "Flower_4_Group",
+    "bytes": 83532,
+    "tris": 1327
+  },
+  {
+    "name": "Plant_1_Big",
+    "bytes": 33808,
+    "tris": 265
+  },
+  {
+    "name": "Clover_1",
+    "bytes": 28736,
+    "tris": 110
+  }
+]

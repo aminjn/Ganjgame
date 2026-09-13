@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="theme-color" content="#17130f" />
+  <title>بازی گنج</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2714%27 fill=%27%23ffd54a%27/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/src/ui/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="hud" id="hud"></header>
+    <main>
+      <canvas id="view"></canvas>
+      <div class="toasts" id="toasts"></div>
+      <div class="mapbtns" id="mapbtns"></div>
+      <div id="tilecard" class="tilecard hidden"></div>
+      <div id="sheet" class="sheet hidden"></div>
+    </main>
+    <nav class="tabs" id="tabs"></nav>
+  </div>
+  <div id="modal"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
