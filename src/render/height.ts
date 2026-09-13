@@ -1,17 +1,18 @@
 // ارتفاع و رنگ پیوسته‌ی زمین: تابعی از موقعیت رأس (نه کاشی) تا هیچ درزی بین چانک‌ها و هیچ شبکه‌ای دیده نشود.
+// دیورامای low-poly: تپه‌های غلتان، کوه‌های برجسته با قله‌ی روشن، مرداب فرورفته با آب، دره‌ی عمیق.
 import { Color } from 'three';
 import { fbm, hash2, valueNoise } from '../rules/rng';
 import type { Terrain } from '../rules/constants';
-import { GROUND, DIRT } from './palette';
+import { GROUND, DIRT, SNOW, MARSH_FLOOR } from './palette';
 
 export type TerrainFn = (x: number, y: number) => Terrain;
 
-const OFFSET: Record<Terrain, number> = { safe: 0, plain: 0, mountain: 0.62, marsh: -0.22, danger: 0.12, hell: 0.35, tomb: 0.05, treasure: 0.3, valley: -1.7 };
-const ROUGH: Record<Terrain, number> = { safe: 0.1, plain: 0.12, mountain: 0.55, marsh: 0.05, danger: 0.3, hell: 0.45, tomb: 0.05, treasure: 0.02, valley: 0.25 };
+const OFFSET: Record<Terrain, number> = { safe: 0, plain: 0.04, mountain: 1.55, marsh: -0.52, danger: 0.28, hell: 0.5, tomb: 0.12, treasure: 0.55, valley: -2.3 };
+const ROUGH: Record<Terrain, number> = { safe: 0.14, plain: 0.16, mountain: 0.95, marsh: 0.05, danger: 0.42, hell: 0.62, tomb: 0.05, treasure: 0.05, valley: 0.35 };
+export const WATER_DROP = 0.3; // آب مرداب زیر سطح تپه‌های اطراف
 
 function smooth(t: number) { return t * t * (3 - 2 * t); }
 
-// نمونه‌برداری دوخطی از مقدار هر کاشی روی موقعیت پیوسته
 function bilinear(wx: number, wz: number, f: (tx: number, ty: number) => number): number {
   const fx = wx - 0.5, fz = wz - 0.5;
   const x0 = Math.floor(fx), z0 = Math.floor(fz);
@@ -27,13 +28,17 @@ export function makeHeight(terrain: TerrainFn, seed: number) {
     let v = cache.get(k); if (v === undefined) { v = terrain(x, y); cache.set(k, v); if (cache.size > 200000) cache.clear(); }
     return v;
   };
+  // تپه‌های غلتان پایه (بدون اثر زمین) — آب هم از همین پیروی می‌کند
+  const roll = (wx: number, wz: number): number =>
+    fbm(wx / 42, wz / 42, seed + 21, 3) * 1.25 + fbm(wx / 13, wz / 13, seed + 22, 2) * 0.32;
   const height = (wx: number, wz: number): number => {
-    const roll = fbm(wx / 11, wz / 11, seed + 21, 2) * 0.28 + fbm(wx / 34, wz / 34, seed + 22, 2) * 0.45;
     const off = bilinear(wx, wz, (x, y) => OFFSET[T(x, y)]);
     const rough = bilinear(wx, wz, (x, y) => ROUGH[T(x, y)]);
-    const detail = fbm(wx / 2.3, wz / 2.3, seed + 23, 2) * rough;
-    return roll + off + detail;
+    const detail = fbm(wx / 2.7, wz / 2.7, seed + 23, 2) * rough + (hash2(Math.round(wx * 2), Math.round(wz * 2), seed + 24) - 0.5) * 0.09;
+    // مرداب: کف صاف‌تر
+    return roll(wx, wz) + off + detail;
   };
+  const water = (wx: number, wz: number): number => roll(wx, wz) - WATER_DROP;
   const tmp = new Color();
   const color = (wx: number, wz: number, out: Color): Color => {
     out.setRGB(0, 0, 0);
@@ -42,20 +47,26 @@ export function makeHeight(terrain: TerrainFn, seed: number) {
     const tx = smooth(fx - x0), tz = smooth(fz - z0);
     const w = [(1 - tx) * (1 - tz), tx * (1 - tz), (1 - tx) * tz, tx * tz];
     const pts = [[x0, z0], [x0 + 1, z0], [x0, z0 + 1], [x0 + 1, z0 + 1]];
+    let mountainW = 0;
     for (let i = 0; i < 4; i++) {
       const t = T(pts[i][0], pts[i][1]);
-      tmp.copy(GROUND[t]);
+      tmp.copy(t === 'marsh' ? MARSH_FLOOR : GROUND[t]);
+      if (t === 'mountain') mountainW += w[i];
       if (t === 'plain' || t === 'safe') {
-        // لکه‌های خاکی گرم میان چمن
-        const d = valueNoise(pts[i][0] / 5.5, pts[i][1] / 5.5, seed + 31);
-        if (d > 0.6) tmp.lerp(DIRT, Math.min(1, (d - 0.6) * 2.2));
+        const d = valueNoise(pts[i][0] / 6, pts[i][1] / 6, seed + 31);
+        if (d > 0.62) tmp.lerp(DIRT, Math.min(1, (d - 0.62) * 2.4));
       }
       out.r += tmp.r * w[i]; out.g += tmp.g * w[i]; out.b += tmp.b * w[i];
     }
-    // تغییر خیلی ملایم روشنایی تا زمین یکدست و مصنوعی نباشد (کم‌کنتراست)
-    const v = 1 + (fbm(wx / 3.1, wz / 3.1, seed + 41, 2)) * 0.05 + (hash2(Math.floor(wx * 2), Math.floor(wz * 2), seed + 42) - 0.5) * 0.03;
+    // قله‌های روشن روی کوه‌های بلند
+    if (mountainW > 0.5) {
+      const h = height(wx, wz) - roll(wx, wz);
+      if (h > 1.55) out.lerp(SNOW, Math.min(1, (h - 1.55) * 1.6));
+    }
+    // تغییر خیلی ملایم روشنایی (کم‌کنتراست) — وجه‌به‌وجه، تا حس low-poly بدهد
+    const v = 1 + (hash2(Math.floor(wx), Math.floor(wz), seed + 42) - 0.5) * 0.06;
     out.multiplyScalar(v);
     return out;
   };
-  return { height, color, T };
+  return { height, water, roll, color, T };
 }

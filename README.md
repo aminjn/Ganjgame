@@ -28,11 +28,11 @@ npm run assets <مسیر Stylized Nature MegaKit>/glTF   # بازسازی GLBه�
 | `src/rules/level.ts` | منحنی سطح (۱۲۰ × ۱٫۵؛ سطح ۵=۹۷۵، ۷=۲٬۴۹۵، ۱۰=۸٬۹۹۳) |
 | `src/rules/tombs.ts`، `camp.ts`، `path.ts`، `economy.ts` | مقبره‌ها، کمپ اولیه، کم‌هزینه‌ترین راه، ارزش جایزه‌ها |
 | `src/rules/state.ts` | وضعیت بازی و همه‌ی کنش‌ها (خرید، کوچ، جنگ، تصاحب، آرتیفکت، گنج، پایان فصل، کلن، کیف پول)، امضا و سخت‌گیری |
-| `src/render/` | Three.js: زمین مش flat-shaded با رنگ رأس، صحنه‌آرایی Instanced از مدل‌های Quaternius، خورشید ۳۵° با سایه، دوربین ثابت ۵۵°/fov 30، بلوم/وینیت/گرید |
+| `src/render/` | Three.js: زمین مش flat-shaded با رنگ رأس (تپه، کوه با قله‌ی روشن، مرداب با آب، دره)، صحنه‌آرایی Instanced از مدل‌های CC0، خورشید ۳۵° با سایه‌ی ۴K، دوربین ثابت ۵۵°/fov 30، MSAA، بلوم/وینیت/گرید |
 | `src/ui/app.ts` | رابط فارسی راست‌به‌چپ: هدر، تب‌ها، کارت خانه، نمای کل سرزمین، مودال نام و آموزش |
 | `src/admin.ts` + `admin.html` | پنل ادمین شش‌تبه (وضعیت و امنیت · فصل و نقشه · اعداد · پرونده‌ی بازیکن · پشتیبانی · تنظیمات ذخیره‌شده) |
 | `faq.html` | ۲۶ پرسش در ۷ دسته |
-| `public/assets/models/` | ۳۱ مدل CC0 از «Quaternius — Stylized Nature MegaKit» (GLB فشرده، بافت WebP ۲۵۶px) |
+| `public/assets/models/` | مدل‌های CC0: «Quaternius — Stylized Nature MegaKit» (صخره، بوته، گیاه، گل) و «Kenney — Nature Kit» در `kenney/` (درخت‌ها و صخره‌های low-poly) |
 | `tests/` | تست‌های زمین، قوانین، وضعیت |
 
 ## کلیدهای ذخیره‌سازی (localStorage)

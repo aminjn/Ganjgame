@@ -8,8 +8,8 @@ import { faDigits } from '../rules/format';
 
 export function makeCamp(color: Color): Group {
   const g = new Group();
-  const tent = new Mesh(new ConeGeometry(0.42, 0.55, 5), new MeshLambertMaterial({ color, flatShading: true }));
-  tent.position.y = 0.28; tent.castShadow = true; g.add(tent);
+  const tent = new Mesh(new ConeGeometry(0.5, 0.7, 5), new MeshLambertMaterial({ color, flatShading: true }));
+  tent.position.y = 0.36; tent.castShadow = true; g.add(tent);
   const base = new Mesh(new CylinderGeometry(0.5, 0.55, 0.08, 8), new MeshLambertMaterial({ color: '#5a4636' }));
   base.position.y = 0.04; g.add(base);
   const flag = makeFlag(color); flag.position.set(0.35, 0.05, 0.3); g.add(flag);

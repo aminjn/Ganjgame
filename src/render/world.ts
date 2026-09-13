@@ -1,7 +1,7 @@
 // دنیای سه‌بعدی: دیورامای کج‌شده‌ی رومیزی. دوربین ثابت (~۵۵ درجه، fov 30، بدون چرخش yaw)، خورشید گرم ~۳۵ درجه با سایه، نور محیطی سرد.
 import {
-  Scene, PerspectiveCamera, WebGLRenderer, DirectionalLight, HemisphereLight, AmbientLight, Color, Fog, Vector3, Vector2, Raycaster, Mesh, Group,
-  PCFSoftShadowMap, ACESFilmicToneMapping, SRGBColorSpace, Object3D, Sprite,
+  Scene, PerspectiveCamera, WebGLRenderer, DirectionalLight, HemisphereLight, Color, Fog, Vector3, Vector2, Raycaster, Mesh, Group,
+  PCFSoftShadowMap, NeutralToneMapping, SRGBColorSpace, Object3D, Sprite,
 } from 'three';
 import type { Terrain } from '../rules/constants';
 import { makeHeight, type TerrainFn } from './height';
@@ -77,27 +77,26 @@ export class World {
     this.renderer.setPixelRatio(dpr);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = PCFSoftShadowMap;
-    this.renderer.toneMapping = ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMapping = NeutralToneMapping;
+    this.renderer.toneMappingExposure = 1.08;
     this.renderer.outputColorSpace = SRGBColorSpace;
 
     this.camera = new PerspectiveCamera(FOV, 1, 1, 400);
-    const bg = new Color('#cfdde8');
+    const bg = new Color('#bfd6ea');
     this.scene.background = bg;
     this.scene.fog = new Fog(bg, 60, 160);
 
-    // خورشید گرم با زاویه‌ی کم — سایه‌های بلند و خوانا
-    this.sun = new DirectionalLight(new Color('#ffdcb0'), 2.6);
+    // خورشید گرم با زاویه‌ی کم (~۳۵ درجه) — سایه‌های بلند و خوانا
+    this.sun = new DirectionalLight(new Color('#ffe2bd'), 3.1);
     this.sun.castShadow = true;
-    const sm = mobile ? 1024 : 2048;
+    const sm = mobile ? 2048 : 4096;
     this.sun.shadow.mapSize.set(sm, sm);
-    this.sun.shadow.bias = -0.0008;
-    this.sun.shadow.normalBias = 0.03;
-    this.sun.shadow.camera.near = 1; this.sun.shadow.camera.far = 200;
+    this.sun.shadow.bias = -0.0004;
+    this.sun.shadow.normalBias = 0.05;
+    this.sun.shadow.camera.near = 1; this.sun.shadow.camera.far = 220;
     this.scene.add(this.sun); this.scene.add(this.sun.target);
     // نور محیطی سرد و نرم: سایه‌ها آبی‌فام، نه سیاه
-    this.scene.add(new HemisphereLight(new Color('#a9c6ff'), new Color('#6f7d5e'), 0.85));
-    this.scene.add(new AmbientLight(new Color('#7f9cd8'), 0.35));
+    this.scene.add(new HemisphereLight(new Color('#c9dcff'), new Color('#7d8c62'), 1.15));
 
     this.scene.add(this.terrainGroup);
     this.scene.add(this.markerGroup);
@@ -118,7 +117,7 @@ export class World {
     this.terrainFn = fn; this.seed = seed; this.skipFn = skip;
     this.H = makeHeight(fn, seed);
     if (this.chunks) this.chunks.clear(m => this.terrainGroup.remove(m));
-    this.chunks = new TerrainChunks(this.H);
+    this.chunks = new TerrainChunks(this.H, seed);
     this.lastLoad.set(-9999, -9999);
   }
 
@@ -132,9 +131,9 @@ export class World {
     this.composer.composer.setSize(w, h);
     this.composer.bloom.resolution.set(Math.floor(w / 2), Math.floor(h / 2));
     // پهنای دید پایه ≈ ۱۷ کاشی (روی گوشی عمودی ارتفاع دید بیشتر است)
-    const width = this.camera.aspect < 0.8 ? 11 : 17;
+    const width = this.camera.aspect < 0.8 ? 9 : 14;
     this.baseDist = width / (2 * Math.tan(FOV / 2 * Math.PI / 180) * this.camera.aspect);
-    this.baseDist = Math.max(18, Math.min(60, this.baseDist));
+    this.baseDist = Math.max(16, Math.min(56, this.baseDist));
     this.lastLoad.set(-9999, -9999);
   }
 
@@ -210,7 +209,7 @@ export class World {
     // خورشید: ناحیه‌ی سایه دور هدف، با قفل به تکسل تا سایه‌ها نلرزند
     const sunDir = new Vector3(Math.cos(SUN_ELEV) * Math.cos(SUN_AZ), Math.sin(SUN_ELEV), Math.cos(SUN_ELEV) * Math.sin(SUN_AZ));
     const b = this.viewBounds();
-    const ext = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) * 0.62 + 4;
+    const ext = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) * 0.55 + 4;
     const sc = this.sun.shadow.camera;
     sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.updateProjectionMatrix();
     const texel = (2 * ext) / this.sun.shadow.mapSize.x;
@@ -227,7 +226,7 @@ export class World {
     if (!moved) return;
     this.lastLoad.set(this.target.x, this.target.z); this.lastLoadZoom = this.zoom;
     const changed = this.chunks.update(b.minX, b.minZ, b.maxX, b.maxZ, m => this.terrainGroup.add(m), m => this.terrainGroup.remove(m));
-    if (changed || this.scenery.ready) this.scenery.populate(b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, (x, z) => this.H.height(x, z), this.seed, this.skipFn);
+    if (changed || this.scenery.ready) this.scenery.populate(b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, (x, z) => this.H.height(x, z), (x, z) => this.H.water(x, z), this.seed, this.skipFn);
     if (this.markers) this.setMarkers(this.markers);
   }
 
@@ -254,7 +253,7 @@ export class World {
     const r = this.canvas.getBoundingClientRect();
     const nd = new Vector2(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1);
     this.raycaster.setFromCamera(nd, this.camera);
-    const hits = this.raycaster.intersectObjects(this.terrainGroup.children, false);
+    const hits = this.raycaster.intersectObjects(this.terrainGroup.children, true).filter(h => !h.object.userData.water);
     if (!hits.length) return null;
     const p = hits[0].point;
     return { x: Math.floor(p.x), y: Math.floor(p.z) };
@@ -275,7 +274,7 @@ export class World {
       if (this.pinch && this.pointers.size === 2) {
         const [a, b] = [...this.pointers.values()];
         const d = Math.hypot(a.x - b.x, a.y - b.y);
-        this.zoom = Math.max(0.55, Math.min(2.4, this.pinch.zoom * this.pinch.d / Math.max(1, d)));
+        this.zoom = Math.max(0.6, Math.min(2.6, this.pinch.zoom * this.pinch.d / Math.max(1, d)));
         return;
       }
       if (!this.drag) return;
@@ -296,6 +295,6 @@ export class World {
       }
     };
     c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
-    c.addEventListener('wheel', e => { e.preventDefault(); this.zoom = Math.max(0.55, Math.min(2.4, this.zoom * Math.pow(1.1, e.deltaY / 100))); }, { passive: false });
+    c.addEventListener('wheel', e => { e.preventDefault(); this.zoom = Math.max(0.6, Math.min(2.6, this.zoom * Math.pow(1.1, e.deltaY / 100))); }, { passive: false });
   }
 }
