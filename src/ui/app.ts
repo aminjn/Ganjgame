@@ -21,7 +21,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 const $ = (id: string) => document.getElementById(id)!;
-const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+const esc = (s: string) => faDigits(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
 export class Game {
   st!: State;
@@ -134,7 +134,7 @@ export class Game {
   }
 
   toast(text: string, kind: string) {
-    const d = document.createElement('div'); d.className = `toast ${kind}`; d.textContent = text;
+    const d = document.createElement('div'); d.className = `toast ${kind}`; d.textContent = faDigits(text);
     const box = $('toasts'); box.prepend(d);
     while (box.children.length > 4) box.lastElementChild!.remove();
     setTimeout(() => d.remove(), 6000);
@@ -181,7 +181,7 @@ export class Game {
       case 'faq': location.href = 'faq.html'; return;
       default: return;
     }
-    if (r) { if (!r.ok) this.toast(r.reason, 'lose'); else { this.dirty = true; this.save(true); } }
+    if (r) { if (!r.ok) this.toast(faDigits(r.reason), 'lose'); else { this.dirty = true; this.save(true); } }
     this.renderAll();
   }
 

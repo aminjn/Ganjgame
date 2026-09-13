@@ -94,7 +94,7 @@ export class Scenery {
             color.multiplyScalar(1.45);
             sphericalNormals(g);
           } else if (rock) { color = new Color('#a39a8f'); }
-          else if (/bark/i.test(mname)) { color = new Color(1.15, 1.1, 1.05); }
+          else if (/bark/i.test(mname)) { color = /dead/i.test(mname) ? new Color(1.7, 1.55, 1.4) : new Color(1.15, 1.1, 1.05); }
           const mat = new MeshLambertMaterial({ map: rock ? null : map, color, alphaTest: cutout ? 0.4 : 0, side: cutout ? DoubleSide : FrontSide, flatShading: rock });
           parts.push({ geometry: g, material: mat, leaf: cutout });
         });
