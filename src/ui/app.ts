@@ -13,11 +13,12 @@ import { Rng } from '../rules/rng';
 import { World, type Markers } from '../render/world';
 import { loadSettings, readCmd, readSeason, writeSeason, readTickets, writeTickets, readStateRaw, writeStateRaw, readLock, writeLock, type Ticket } from './storage';
 import { drawTerrainPreview, drawOverlay, MINI_COLORS } from './minimap';
+import { ico, UNIT_ICON } from './icons';
 
 type Tab = 'map' | 'army' | 'shop' | 'wallet' | 'artifacts' | 'clan' | 'dashboard';
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'map', label: 'نقشه' }, { id: 'army', label: 'لشگر' }, { id: 'shop', label: 'فروشگاه' }, { id: 'wallet', label: 'کیف پول' },
-  { id: 'artifacts', label: 'آرتیفکت' }, { id: 'clan', label: 'کلن' }, { id: 'dashboard', label: 'داشبورد' },
+const TABS: { id: Tab; label: string; icon: string }[] = [
+  { id: 'map', label: 'نقشه', icon: 'home' }, { id: 'army', label: 'لشگر', icon: 'army' }, { id: 'shop', label: 'فروشگاه', icon: 'coin' }, { id: 'wallet', label: 'کیف پول', icon: 'toman' },
+  { id: 'artifacts', label: 'آرتیفکت', icon: 'artifact' }, { id: 'clan', label: 'کلن', icon: 'guard' }, { id: 'dashboard', label: 'داشبورد', icon: 'level' },
 ];
 
 const $ = (id: string) => document.getElementById(id)!;
@@ -207,7 +208,7 @@ export class Game {
   renderAll() { this.renderHud(); this.renderTabs(); this.renderMapButtons(); if (this.tab === 'map') { $('sheet').classList.add('hidden'); this.renderTileCard(); } else { $('tilecard').classList.add('hidden'); this.renderSheet(); } this.renderMarkers(); this.renderModal(); }
 
   renderTabs() {
-    $('tabs').innerHTML = TABS.map(t => `<button data-tab="${t.id}" class="${t.id === this.tab ? 'active' : ''}">${t.label}</button>`).join('');
+    $('tabs').innerHTML = TABS.map(t => `<button data-tab="${t.id}" class="${t.id === this.tab ? 'active' : ''}">${ico(t.icon)}<span>${t.label}</span></button>`).join('');
   }
 
   renderMapButtons() {
@@ -228,14 +229,14 @@ export class Game {
     }
     $('hud').innerHTML = `
       <span class="name">${clanMode ? '⚑ ' + esc(st.clan!.name) : esc(st.player.name ?? 'بی‌نام')}</span>
-      <span class="badge">فصل ${faDigits(st.season)}</span>
-      <span class="stat">سطح <b>${num(xp.level)}</b> <span class="muted">(${num(xp.into)}/${num(xp.need)})</span></span>
-      <span class="stat">${clanMode ? 'خزانه' : 'سکه'} <b>${num(S.coinsOf(st, st.control))}</b></span>
-      <span class="stat green">تومان <b>${num(st.player.toman)}</b></span>
-      <span class="stat cyan">استخر <b>${num(st.pool)}</b> تومان</span>
-      <span class="stat">گنج <b>${num(treasureValue(st.pool, s))}</b> تومان</span>
-      <span class="stat purple">هر آرتیفکت <b>${num(artifactValue(st.pool, s))}</b> تومان</span>
-      <span class="stat green">مشارکت <b>${num(participationValue(st.pool, s))}</b> تومان</span>
+      <span class="badge">${ico('season')}فصل ${faDigits(st.season)}</span>
+      <span class="stat">${ico('level')}سطح <b>${num(xp.level)}</b> <span class="muted">(${num(xp.into)}/${num(xp.need)})</span></span>
+      <span class="stat">${ico('coin')}${clanMode ? 'خزانه' : 'سکه'} <b>${num(S.coinsOf(st, st.control))}</b></span>
+      <span class="stat green">${ico('toman')}تومان <b>${num(st.player.toman)}</b></span>
+      <span class="stat cyan">${ico('pool')}استخر <b>${num(st.pool)}</b> تومان</span>
+      <span class="stat">${ico('treasure')}گنج <b>${num(treasureValue(st.pool, s))}</b> تومان</span>
+      <span class="stat purple">${ico('artifact')}هر آرتیفکت <b>${num(artifactValue(st.pool, s))}</b> تومان</span>
+      <span class="stat green">${ico('share')}مشارکت <b>${num(participationValue(st.pool, s))}</b> تومان</span>
       <span class="spacer"></span>
       <button class="help" data-act="faq">راهنما</button>
       ${winner}`;
@@ -370,9 +371,9 @@ export class Game {
   armyHtml() {
     const st = this.st, s = this.s, id = st.control, a = S.currentActor(st);
     const guardians = Object.values(st.owned).filter(o => o.owner === id && o.guardian).length;
-    const rows = ALL_UNITS.map(u => `<tr><td>${C.UNITS[u].name}</td><td class="n">${num(a.units[u])}</td><td class="n">${num(unitPowerOn(u, null, s))}</td><td>${C.UNITS[u].bonusTerrains.length ? '×' + faDigits(String(s.terrainBonus)) + ' در ' + C.UNITS[u].bonusTerrains.map(t => C.TERRAIN[t].name).join('، ') : C.UNITS[u].speed ? 'سرعت کوچ' : C.UNITS[u].luck ? 'شانس ' + faDigits(String(s.explorerLuck)) : '—'}</td></tr>`).join('');
+    const rows = ALL_UNITS.map(u => `<tr><td>${ico(UNIT_ICON[u])}${C.UNITS[u].name}</td><td class="n">${num(a.units[u])}</td><td class="n">${num(unitPowerOn(u, null, s))}</td><td>${C.UNITS[u].bonusTerrains.length ? '×' + faDigits(String(s.terrainBonus)) + ' در ' + C.UNITS[u].bonusTerrains.map(t => C.TERRAIN[t].name).join('، ') : C.UNITS[u].speed ? 'سرعت کوچ' : C.UNITS[u].luck ? 'شانس ' + faDigits(String(s.explorerLuck)) : '—'}</td></tr>`).join('');
     const rc = S.restCost(st, s, id);
-    return `<div class="card"><h3>لشگر ${id === 'clan' ? 'کلن' : ''}</h3>
+    return `<div class="card"><h3>${ico('army', 'lg')}لشگر ${id === 'clan' ? 'کلن' : ''}</h3>
       <div class="kv"><span>نیروی آزاد</span><span>${num(totalUnits(a.units))}</span><span>نگاهبان خانه‌ها (آزاد نیستند)</span><span>${num(guardians)}</span>
       <span>انرژی</span><span>${num(a.energy, 0)} / ${num(C.ENERGY_MAX)}</span>
       <span>قدرت لشگر (دشت)</span><span>${num(armyPower(a.units, a.energy, 'plain', s), 1)}</span>
@@ -388,7 +389,7 @@ export class Game {
 
   shopHtml() {
     const st = this.st, s = this.s, id = st.control;
-    const items = ALL_UNITS.map(u => `<div class="unit"><b>${C.UNITS[u].name}</b> — ${num(s.unitPrice[u])} سکه<div class="muted">قدرت ${num(s.unitPower[u])}${C.UNITS[u].bonusTerrains.length ? '، ×' + faDigits(String(s.terrainBonus)) + ' در ' + C.UNITS[u].bonusTerrains.map(t => C.TERRAIN[t].name).join('، ') : ''}${C.UNITS[u].luck ? '، شانس ' + faDigits(String(s.explorerLuck)) : ''}${C.UNITS[u].speed ? '، ' + num(s.guidesForHalf) + ' نفر زمان کوچ را نصف می‌کند' : ''}</div>
+    const items = ALL_UNITS.map(u => `<div class="unit"><div class="head">${ico(UNIT_ICON[u], 'lg')}<b>${C.UNITS[u].name}</b> <span class="res">${ico('coin')}${num(s.unitPrice[u])}</span></div><div class="muted">قدرت ${num(s.unitPower[u])}${C.UNITS[u].bonusTerrains.length ? '، ×' + faDigits(String(s.terrainBonus)) + ' در ' + C.UNITS[u].bonusTerrains.map(t => C.TERRAIN[t].name).join('، ') : ''}${C.UNITS[u].luck ? '، شانس ' + faDigits(String(s.explorerLuck)) : ''}${C.UNITS[u].speed ? '، ' + num(s.guidesForHalf) + ' نفر زمان کوچ را نصف می‌کند' : ''}</div>
       <div class="qty"><input type="number" min="1" value="10" /><button class="gold" data-act="buyUnit" data-unit="${u}">خرید</button></div></div>`).join('');
     return `<div class="card"><h3>فروشگاه (${id === 'clan' ? 'با سکه‌ی خزانه‌ی کلن' : 'با سکه'})</h3><div class="kv"><span>${id === 'clan' ? 'خزانه' : 'سکه'}</span><span>${num(S.coinsOf(st, id))}</span></div></div>
       <div class="units">${items}</div>
@@ -399,12 +400,12 @@ export class Game {
     const st = this.st, s = this.s, p = st.player;
     const tickets = readTickets().filter(t => t.player === (p.name ?? ''));
     const txRows = st.tx.slice(0, 30).map(t => `<tr><td>${esc(t.note)}</td><td class="n">${t.amount >= 0 ? '+' : ''}${num(t.amount)}</td><td>${dateTime(t.t)}</td></tr>`).join('');
-    return `<div class="card"><h3>کیف پول</h3>
+    return `<div class="card"><h3>${ico('toman', 'lg')}کیف پول</h3>
       <div class="kv"><span>موجودی</span><span>${num(p.toman)} تومان</span><span>بلوکه‌شده در پیشنهادها</span><span>${num(p.blocked)} تومان</span><span>موجودی آزاد</span><span>${num(p.toman - p.blocked)} تومان</span></div>
       ${st.payout && !st.payout.toIban ? `<p class="warn">فصل بسته شد ولی شبا ثبت نشده بود؛ ${num(st.payout.amount)} تومان در کیف پول ماند.</p>` : ''}
       ${st.payout && st.payout.toIban ? `<p class="ok">پایان فصل: ${num(st.payout.amount)} تومان به شبای ثبت‌شده واریز شد.</p>` : ''}</div>
       <div class="card"><h3>واریز وجه</h3><form data-act="deposit" class="row"><input name="amount" type="number" min="1000" step="1000" placeholder="مبلغ به تومان" required /><button class="primary">واریز</button></form></div>
-      <div class="card"><h3>خرید سکه</h3><p class="muted">هر سکه ${num(s.coinToman)} تومان. سقف هر بار ${num(s.buyCoinsMax)} سکه. هر خرید، استخر جایزه‌ی فصل را بزرگ می‌کند.</p>
+      <div class="card"><h3>${ico('coin', 'lg')}خرید سکه</h3><p class="muted">هر سکه ${num(s.coinToman)} تومان. سقف هر بار ${num(s.buyCoinsMax)} سکه. هر خرید، استخر جایزه‌ی فصل را بزرگ می‌کند.</p>
       <form data-act="buyCoins" class="row"><input name="amount" type="number" min="1" placeholder="تعداد سکه" required /><button class="primary">خرید</button></form></div>
       <div class="card"><h3>شبا و برداشت</h3>
       <form data-act="setIban"><div class="row"><input name="iban" placeholder="IR + ۲۴ رقم" value="${esc(p.iban)}" /><input name="ownerName" placeholder="نام صاحب حساب" value="${esc(p.ownerName)}" /><button>ثبت</button></div></form>
@@ -421,7 +422,7 @@ export class Game {
     const av = artifactValue(st.pool, s);
     const list = (who: ActorId) => { const a = who === 'clan' ? st.clan : st.player; if (!a) return ''; return a.artifacts.map(i => `<tr><td>${esc(st.tombs[i]?.name ?? String(i))}</td><td>${who === 'clan' ? 'به نام کلن' : 'شخصی'}</td><td class="n">${num(av)}</td></tr>`).join(''); };
     const tombs = st.tombs.filter(t => !t.captured).map(t => `<tr><td>${esc(t.name)}</td><td class="n">(${num(t.x)}، ${num(t.y)})</td><td class="n">${num(Math.round(euclid(t.x, t.y)))}</td><td><button data-act="focusTile" data-x="${t.x}" data-y="${t.y}">نمایش</button></td></tr>`).join('');
-    return `<div class="card"><h3>آرتیفکت‌های تو</h3><p class="muted">ارزش هر آرتیفکت = ${pct(s.artifactShare)} استخر = ${num(av)} تومان. در پایان فصل خودکار فروخته می‌شود؛ شخصی کامل به خودت، کلنی به نسبت سهم. فروش دستی وجود ندارد.</p>
+    return `<div class="card"><h3>${ico('artifact', 'lg')}آرتیفکت‌های تو</h3><p class="muted">ارزش هر آرتیفکت = ${pct(s.artifactShare)} استخر = ${num(av)} تومان. در پایان فصل خودکار فروخته می‌شود؛ شخصی کامل به خودت، کلنی به نسبت سهم. فروش دستی وجود ندارد.</p>
       <table><tr><th>نام</th><th>مالکیت</th><th>ارزش (تومان)</th></tr>${list('player')}${list('clan')}${!st.player.artifacts.length && !st.clan?.artifacts.length ? '<tr><td class="muted" colspan="3">هنوز آرتیفکتی نداری</td></tr>' : ''}</table>
       <div class="kv"><span>آرتیفکت برای شرط گنج</span><span>${num(S.artifactCount(st, st.control))} از ${num(s.treasureArtifacts)}</span></div></div>
       <div class="card"><h3>مقبره‌های نمایان (${num(st.tombs.filter(t => !t.captured).length)} از ${num(C.TOMBS_TOTAL)} نام)</h3><table><tr><th>نام</th><th>مختصات</th><th>فاصله</th><th></th></tr>${tombs}</table><p class="muted">ورود از سطح ${num(s.gates.tomb)}. با تصاحب هر مقبره آرتیفکتش همان لحظه به دست می‌آید و مقبره‌ی تازه‌ای دورترین جای ممکن از قلمروی تو ساخته می‌شود.</p></div>
@@ -434,7 +435,7 @@ export class Game {
       <form data-act="createClan" class="row"><input name="clanName" placeholder="نام کلن" /><button class="primary">ساخت کلن</button></form></div>`;
     const shares = S.clanShares(st);
     const members = c.members.map(m => `<tr><td>${esc(m.name)}${m.name === c.commander ? ' (فرمانده)' : ''}</td><td class="n">${num(m.weight)}</td><td class="n">${pct(shares.find(x => x.name === m.name)?.share ?? 0)}</td></tr>`).join('');
-    const donate = ALL_UNITS.map(u => `<div class="unit"><b>${C.UNITS[u].name}</b> <span class="muted">تو: ${num(st.player.units[u])} — کلن: ${num(c.units[u])}</span><div class="qty"><input type="number" min="1" value="1" /><button data-act="donate" data-unit="${u}">اهدا</button></div></div>`).join('');
+    const donate = ALL_UNITS.map(u => `<div class="unit"><div class="head">${ico(UNIT_ICON[u], 'lg')}<b>${C.UNITS[u].name}</b></div> <span class="muted">تو: ${num(st.player.units[u])} — کلن: ${num(c.units[u])}</span><div class="qty"><input type="number" min="1" value="1" /><button data-act="donate" data-unit="${u}">اهدا</button></div></div>`).join('');
     const lvl = S.levelOf(st, s, 'clan');
     const nextVote = new Date(c.createdAt + s.electionDays * 86400000);
     return `<div class="card"><h3>کلن «${esc(c.name)}»</h3>

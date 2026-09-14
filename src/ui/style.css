@@ -33,7 +33,7 @@ header.hud .help { padding: 3px 10px; font-size: 12px; }
 header.hud .winner { width: 100%; background: linear-gradient(180deg, #ffd85c, #f2b52c); color: #4a2f05; padding: 4px 8px; border-radius: 8px; text-align: center; font-weight: 800; border: 2px solid #8a5c0b; }
 main { position: relative; flex: 1; }
 nav.tabs { position: relative; z-index: 6; display: flex; gap: 4px; padding: 6px 6px calc(6px + var(--safe-b)); background: linear-gradient(180deg, #2c4a6b, #1d3247); border-top: 2px solid rgba(0,0,0,0.4); }
-nav.tabs button { flex: 1; padding: 8px 2px; font-size: 11.5px; border-radius: 10px; background: linear-gradient(180deg, #4a6f94, #34557a); box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 2px 0 #14273b; }
+nav.tabs button { flex: 1; padding: 6px 2px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 1px; border-radius: 10px; background: linear-gradient(180deg, #4a6f94, #34557a); box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 2px 0 #14273b; }
 nav.tabs button.active { background: linear-gradient(180deg, #ffd85c 0%, #f2b52c 55%, #d18f12 100%); color: #4a2f05; text-shadow: 0 1px 0 rgba(255,255,255,0.4); box-shadow: inset 0 2px 0 rgba(255,255,255,0.55), 0 2px 0 #8a5c0b; }
 /* پنل‌های قاب‌دار */
 .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; max-height: 62%; overflow: auto; background: var(--panel); border: 3px solid var(--frame-dark); border-bottom: 0; border-radius: 18px 18px 0 0; padding: 12px 14px 16px; box-shadow: inset 0 0 0 3px #c9944f, 0 -6px 16px rgba(0,0,0,0.35); }
@@ -102,3 +102,11 @@ a { color: #1d6fb8; font-weight: 700; }
   .mapbtns { top: 6px; left: 6px; }
   .mapbtns button { padding: 5px 7px; font-size: 11px; }
 }
+/* آیکون‌ها */
+.ico { width: 18px; height: 18px; vertical-align: -4px; margin-left: 3px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.35)); flex: 0 0 auto; }
+.ico.lg { width: 28px; height: 28px; vertical-align: -8px; }
+.ico.xl { width: 40px; height: 40px; vertical-align: middle; }
+header.hud .stat .ico { width: 20px; height: 20px; }
+.unit .head { display: flex; align-items: center; gap: 6px; }
+.res { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+nav.tabs button .ico { width: 22px; height: 22px; margin: 0; }

@@ -169,7 +169,7 @@ export class World {
     this.markers = m;
     const place = (o: Object3D, p: P, lift = 0) => { o.position.set(p.x + 0.5, this.heightAt(p.x + 0.5, p.y + 0.5) + lift, p.y + 0.5); };
     if (m.camp) { if (!this.campObj) { this.campObj = makeCamp(PLAYER_COLOR); this.markerGroup.add(this.campObj); } place(this.campObj, m.camp); }
-    if (m.clanCamp) { if (!this.clanCampObj) { this.clanCampObj = makeCamp(CLAN_COLOR); this.markerGroup.add(this.clanCampObj); } place(this.clanCampObj, m.clanCamp); }
+    if (m.clanCamp) { if (!this.clanCampObj) { this.clanCampObj = makeCamp(CLAN_COLOR, true); this.markerGroup.add(this.clanCampObj); } place(this.clanCampObj, m.clanCamp); }
     else if (this.clanCampObj) { this.markerGroup.remove(this.clanCampObj); this.clanCampObj = null; }
     // مقبره‌ها
     while (this.tombObjs.length < m.tombs.length) { const t = makeTomb(); this.tombObjs.push(t); this.markerGroup.add(t); }

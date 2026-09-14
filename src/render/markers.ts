@@ -11,14 +11,20 @@ const PROPS = new Map<string, Object3D>();
 const PROP_COLORS: Record<string, string> = { dirt: '#96836e', grass: '#6aa74c', stone: '#a09991', woodBark: '#75553f', woodInner: '#cfa981', colorRed: '#c9524e', colorTan: '#d6ac78', colorYellow: '#e6b64c', leafsGreen: '#5f9d49', _defaultMat: '#e8e2d8', snow: '#f2efe8' };
 export async function loadProps(base = 'assets/models/props/') {
   const loader = new GLTFLoader();
-  await Promise.all(['tent_detailedOpen', 'campfire_logs', 'statue_obelisk', 'statue_head', 'statue_block', 'chest_gold', 'torch_lit', 'column', 'rubble_half'].map(async n => {
+  const names = ['tent_detailedOpen', 'tent_smallOpen', 'campfire_logs', 'statue_obelisk', 'statue_head', 'statue_block', 'chest_gold', 'torch_lit', 'torch_mounted', 'column', 'pillar_decorated', 'rubble_half',
+    'wall', 'wall_doorway', 'wall_arched', 'wall_pillar', 'wall_half', 'floor_tile_large', 'floor_tile_small', 'stairs_wide', 'banner_shield_yellow', 'banner_shield_blue', 'banner_triple_yellow', 'banner_thin_red',
+    'barrel_large', 'crates_stacked', 'box_stacked', 'coin_stack_large', 'coin_stack_medium', 'sword_shield_gold', 'trunk_large_A', 'keg', 'fence_simple'];
+  await Promise.all(names.map(async n => {
     try {
       const g = await loader.loadAsync(base + n + '.glb');
       g.scene.traverse((o: any) => {
         if (!o.isMesh) return;
         const src = o.material; const name: string = src?.name ?? '';
         const map = src?.map ?? null; if (map) map.colorSpace = SRGBColorSpace;
-        const color = PROP_COLORS[name] ? new Color(PROP_COLORS[name]) : (src?.color ? src.color.clone() : new Color(0xffffff));
+        let color = PROP_COLORS[name] ? new Color(PROP_COLORS[name]) : (src?.color ? src.color.clone() : new Color(0xffffff));
+        // سنگ‌کاری KayKit تیره است؛ برای پالت روشن CoC گرم و روشن‌ترش می‌کنیم
+        if (map && /^(wall|floor|pillar|stairs|column|barrier|rubble)/.test(n)) color = new Color(1.75, 1.62, 1.42);
+        else if (map) color = new Color(1.2, 1.15, 1.08);
         o.material = new MeshPhongMaterial({ map: PROP_COLORS[name] ? null : map, color, shininess: 16, specular: new Color('#2a2a2a') });
         o.castShadow = true; o.receiveShadow = true;
       });
@@ -30,10 +36,52 @@ function prop(name: string, scale: number): Object3D | null {
   const p = PROPS.get(name); if (!p) return null;
   const o = p.clone(); o.scale.setScalar(scale); return o;
 }
+function part(g: Group, name: string, scale: number, x: number, z: number, rotY = 0, y = 0): Object3D | null {
+  const o = prop(name, scale); if (!o) return null;
+  o.position.set(x, y, z); o.rotation.y = rotY; g.add(o); return o;
+}
+// قطعات KayKit روی شبکه‌ی ۴ واحدی‌اند؛ با این مقیاس هر دیوار ≈ ۰٫۹۶ کاشی می‌شود
+const K = 0.24;
+// حصار مربعی از دیوارهای سنگی با یک دروازه در جلو
+function stoneEnclosure(g: Group, half: number, front: string, colorBanner: string | null) {
+  const L = 4 * K; // طول هر دیوار
+  const n = Math.max(1, Math.round((2 * half) / L));
+  const start = -half + L / 2;
+  for (let i = 0; i < n; i++) {
+    const x = start + i * L;
+    // پشت
+    part(g, 'wall', K, x, -half, 0);
+    // جلو (وسط: دروازه)
+    part(g, i === Math.floor((n - 1) / 2) ? front : 'wall', K, x, half, Math.PI);
+    // چپ و راست
+    part(g, 'wall', K, -half, x, Math.PI / 2);
+    part(g, 'wall', K, half, x, -Math.PI / 2);
+  }
+  for (const [x, z] of [[-half, -half], [half, -half], [-half, half], [half, half]]) part(g, 'wall_pillar', K, x, z, 0);
+  if (colorBanner) { part(g, colorBanner, K, -half * 0.45, -half + 0.05, 0); part(g, colorBanner, K, half * 0.45, -half + 0.05, 0); }
+}
 import { faDigits } from '../rules/format';
 
-export function makeCamp(color: Color): Group {
+export function makeCamp(color: Color, clan = false): Group {
   const g = new Group();
+  if (PROPS.has('wall') && PROPS.has('tent_detailedOpen')) {
+    const half = 0.98;
+    // کف سنگی
+    for (const [x, z] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) part(g, 'floor_tile_large', 0.25, x, z, 0, -0.02);
+    stoneEnclosure(g, half, 'wall_doorway', clan ? 'banner_shield_blue' : 'banner_shield_yellow');
+    // چادر فرمانده، آتش، انبار
+    const tent = part(g, clan ? 'tent_smallOpen' : 'tent_detailedOpen', clan ? 1.3 : 1.25, -0.2, -0.15, Math.PI * 0.85)!;
+    void tent;
+    part(g, 'campfire_logs', 0.9, 0.5, 0.35, 0);
+    part(g, 'crates_stacked', 0.22, 0.6, -0.5, 0.3);
+    part(g, 'barrel_large', 0.2, -0.65, 0.45, 0);
+    part(g, 'torch_mounted', 0.3, -0.5, half - 0.1, Math.PI, 0.55);
+    part(g, 'torch_mounted', 0.3, 0.5, half - 0.1, Math.PI, 0.55);
+    if (clan) part(g, 'tent_smallOpen', 1.1, 0.45, -0.2, Math.PI * 0.6);
+    const flag = makeFlag(color); flag.position.set(0, 0, 0.55); flag.scale.setScalar(1.3); g.add(flag);
+    const ring = new Mesh(new TorusGeometry(1.35, 0.04, 6, 40), new MeshBasicMaterial({ color })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.03; g.add(ring);
+    return g;
+  }
   const tent0 = prop('tent_detailedOpen', 1.35);
   if (tent0) {
     tent0.rotation.y = Math.PI * 0.85; g.add(tent0);
@@ -70,6 +118,23 @@ export function makeCaravan(color: Color): Group {
 
 export function makeTomb(): Group {
   const g = new Group();
+  if (PROPS.has('wall_arched') && PROPS.has('statue_obelisk')) {
+    const half = 0.5;
+    part(g, 'floor_tile_large', 0.25, 0, 0, 0, -0.02);
+    part(g, 'wall', K, 0, -half, 0);
+    part(g, 'wall_arched', K, 0, half, Math.PI);
+    part(g, 'wall', K, -half, 0, Math.PI / 2);
+    part(g, 'wall', K, half, 0, -Math.PI / 2);
+    for (const [x, z] of [[-half, -half], [half, -half], [-half, half], [half, half]]) part(g, 'wall_pillar', K, x, z, 0);
+    part(g, 'statue_obelisk', 1.6, 0, -0.05, 0);
+    part(g, 'statue_head', 0.9, 0.75, 0.75, -0.7);
+    part(g, 'torch_lit', 0.28, -0.42, half + 0.2, 0);
+    part(g, 'torch_lit', 0.28, 0.42, half + 0.2, 0);
+    part(g, 'banner_thin_red', K, 0, -half + 0.06, 0);
+    const cap = new Mesh(new OctahedronGeometry(0.14, 0), new MeshBasicMaterial({ color: TOMB_GLOW }));
+    cap.position.y = 1.55; g.add(cap); g.userData.cap = cap;
+    return g;
+  }
   const ob = prop('statue_obelisk', 1.7);
   if (ob) {
     g.add(ob);
@@ -92,6 +157,25 @@ export function makeTomb(): Group {
 
 export function makeTreasure(): Group {
   const g = new Group();
+  if (PROPS.has('stairs_wide') && PROPS.has('chest_gold')) {
+    const S = 0.25;
+    // سکوی سنگی ۲×۲ با پله در جلو
+    for (const [x, z] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) part(g, 'floor_tile_large', S, x, z, 0, 0.42);
+    for (const [x, z] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) part(g, 'floor_tile_large', S, x, z, 0, 0.02);
+    part(g, 'stairs_wide', 0.22, 0, 1.0, Math.PI, -0.02);
+    for (const [x, z] of [[-1.0, -1.0], [1.0, -1.0], [-1.0, 1.0], [1.0, 1.0]]) part(g, 'pillar_decorated', 0.28, x, z, 0, 0.42);
+    part(g, 'banner_triple_yellow', 0.3, 0, -1.05, 0, 0.42);
+    part(g, 'chest_gold', 0.62, 0, 0.05, Math.PI, 0.44);
+    part(g, 'coin_stack_large', 0.28, -0.62, 0.35, 0.4, 0.44);
+    part(g, 'coin_stack_medium', 0.28, 0.62, 0.3, -0.5, 0.44);
+    part(g, 'coin_stack_medium', 0.28, 0.5, -0.55, 0.2, 0.44);
+    part(g, 'sword_shield_gold', 0.3, -0.55, -0.6, 0.6, 0.65);
+    part(g, 'torch_lit', 0.34, -1.25, 1.2, 0);
+    part(g, 'torch_lit', 0.34, 1.25, 1.2, 0);
+    const gem = new Mesh(new OctahedronGeometry(0.18, 0), new MeshBasicMaterial({ color: TREASURE_GLOW }));
+    gem.position.y = 1.35; g.add(gem); g.userData.gem = gem;
+    return g;
+  }
   const ch = prop('chest_gold', 0.7);
   if (ch) {
     ch.rotation.y = Math.PI; g.add(ch);
