@@ -1,0 +1,19 @@
+[
+  { "key": "units.explorer.idle", "file": "units/explorer_idle.png", "x": 250, "y": 40, "w": 92, "h": 125, "tileW": 0.9, "tileH": 1.15 },
+  { "key": "units.soldier.idle", "file": "units/soldier_idle.png", "x": 342, "y": 40, "w": 92, "h": 125, "tileW": 0.9, "tileH": 1.15 },
+  { "key": "units.guide.idle", "file": "units/guide_idle.png", "x": 434, "y": 40, "w": 92, "h": 125, "tileW": 0.9, "tileH": 1.15 },
+  { "key": "units.archer.idle", "file": "units/archer_idle.png", "x": 526, "y": 40, "w": 92, "h": 125, "tileW": 0.9, "tileH": 1.15 },
+  { "key": "units.guard.idle", "file": "units/guard_idle.png", "x": 618, "y": 40, "w": 100, "h": 125, "tileW": 1.0, "tileH": 1.2 },
+  { "key": "monsters.plain", "file": "monsters/plain.png", "x": 745, "y": 45, "w": 110, "h": 120, "tileW": 1.0, "tileH": 1.0 },
+  { "key": "monsters.mountain", "file": "monsters/mountain.png", "x": 855, "y": 45, "w": 110, "h": 120, "tileW": 1.0, "tileH": 1.1 },
+  { "key": "monsters.marsh", "file": "monsters/marsh.png", "x": 965, "y": 45, "w": 110, "h": 120, "tileW": 1.0, "tileH": 1.1 },
+  { "key": "monsters.danger", "file": "monsters/danger.png", "x": 1075, "y": 45, "w": 110, "h": 120, "tileW": 1.0, "tileH": 1.2 },
+  { "key": "monsters.hell", "file": "monsters/hell.png", "x": 1185, "y": 45, "w": 110, "h": 120, "tileW": 1.0, "tileH": 1.2 },
+  { "key": "monsters.tomb", "file": "monsters/tomb.png", "x": 1295, "y": 45, "w": 110, "h": 120, "tileW": 1.0, "tileH": 1.25 },
+  { "key": "monsters.treasure", "file": "monsters/treasure.png", "x": 1405, "y": 45, "w": 120, "h": 120, "tileW": 1.1, "tileH": 1.35 },
+  { "key": "buildings.camp", "file": "buildings/camp.png", "x": 465, "y": 225, "w": 185, "h": 180, "tileW": 3.2, "tileH": 3.0 },
+  { "key": "buildings.clan_camp", "file": "buildings/clan_camp.png", "x": 465, "y": 415, "w": 100, "h": 120, "tileW": 2.2, "tileH": 2.6 },
+  { "key": "buildings.tomb", "file": "buildings/tomb.png", "x": 555, "y": 415, "w": 85, "h": 120, "tileW": 1.6, "tileH": 2.4 },
+  { "key": "buildings.treasure", "file": "buildings/treasure.png", "x": 650, "y": 395, "w": 130, "h": 140, "tileW": 2.6, "tileH": 2.8 },
+  { "key": "buildings.caravan", "file": "buildings/caravan.png", "x": 965, "y": 395, "w": 165, "h": 125, "tileW": 2.0, "tileH": 1.5 }
+]
