@@ -20,7 +20,7 @@ function bilinear(wx: number, wz: number, f: (tx: number, ty: number) => number)
   return (a + (b - a) * tx) * (1 - tz) + (c + (d - c) * tx) * tz;
 }
 
-export function makeHeight(terrain: TerrainFn, seed: number) {
+export function makeHeight(terrain: TerrainFn, seed: number, flat = false) {
   const cache = new Map<number, Terrain>();
   const T = (x: number, y: number): Terrain => {
     const k = x * 4096 + y + 8_000_000;
@@ -30,12 +30,18 @@ export function makeHeight(terrain: TerrainFn, seed: number) {
   // تپه‌های خیلی ملایم (زمین CoC تقریباً صاف است)
   const roll = (wx: number, wz: number): number => fbm(wx / 48, wz / 48, seed + 21, 2) * 0.12;
   const height = (wx: number, wz: number): number => {
+    if (flat) {
+      const o = bilinear(wx, wz, (x, y) => { const t = T(x, y); return t === 'marsh' ? -0.3 : t === 'valley' ? -1.1 : 0; });
+      // مرداب: کف ناهموار تا آب فقط در گودی‌ها بماند (برکه‌ها، نه دریاچه‌ی یکدست)
+      const marshW = bilinear(wx, wz, (x, y) => (T(x, y) === 'marsh' ? 1 : 0));
+      return o + marshW * (fbm(wx / 3.2, wz / 3.2, seed + 61, 2) * 0.22 + 0.06);
+    }
     const off = bilinear(wx, wz, (x, y) => OFFSET[T(x, y)]);
     const rough = bilinear(wx, wz, (x, y) => ROUGH[T(x, y)]);
     const detail = fbm(wx / 2.4, wz / 2.4, seed + 23, 2) * rough;
     return roll(wx, wz) + off + detail;
   };
-  const water = (wx: number, wz: number): number => roll(wx, wz) - WATER_DROP;
+  const water = (wx: number, wz: number): number => (flat ? -0.14 : roll(wx, wz) - WATER_DROP);
   const tmp = new Color();
   const color = (wx: number, wz: number, out: Color): Color => {
     out.setRGB(0, 0, 0);
@@ -54,9 +60,9 @@ export function makeHeight(terrain: TerrainFn, seed: number) {
         // الگوی نرم چمن: لکه‌های کمی تیره‌تر و گاهی خاکی، مثل کاشی‌های چمن CoC
         // چمن یکدست با اسپکل ریز و لکه‌های خیلی ملایم (مثل CoC)
         const d = valueNoise(pts[i][0] / 5, pts[i][1] / 5, seed + 31);
-        tmp.lerp(GRASS_DARK, Math.max(0, (d - 0.5)) * 0.7);
+        tmp.lerp(GRASS_DARK, Math.max(0, (d - 0.45)) * 1.3);
         const dirt = valueNoise(pts[i][0] / 9, pts[i][1] / 9, seed + 32);
-        if (dirt > 0.76) tmp.lerp(DIRT, Math.min(1, (dirt - 0.76) * 2.5));
+        if (dirt > 0.72) tmp.lerp(DIRT, Math.min(1, (dirt - 0.72) * 2.5));
       }
       out.r += tmp.r * w[i]; out.g += tmp.g * w[i]; out.b += tmp.b * w[i];
     }
@@ -72,7 +78,9 @@ export function makeHeight(terrain: TerrainFn, seed: number) {
     const avg = (height(wx + 1.5, wz) + height(wx - 1.5, wz) + height(wx, wz + 1.5) + height(wx, wz - 1.5)) / 4;
     const ao = Math.max(0, Math.min(0.18, (avg - h) * 0.3));
     const under = Math.max(0, Math.min(0.3, (water(wx, wz) - h) * 0.9));
-    out.multiplyScalar((1 - ao - under) * (1 + (hash2(Math.floor(wx * 2), Math.floor(wz * 2), seed + 42) - 0.5) * 0.035));
+    // اسپکل ریز و لکه‌های نرم تا زمین «نقشه‌ی رنگی» نباشد
+    const speck = (hash2(Math.floor(wx * 2), Math.floor(wz * 2), seed + 42) - 0.5) * 0.09 + fbm(wx / 1.7, wz / 1.7, seed + 43, 2) * 0.06;
+    out.multiplyScalar((1 - ao - under) * (1 + speck));
     return out;
   };
   return { height, water, roll, color, T };

@@ -20,7 +20,10 @@ for (const r of regions) {
   const corners = [[0, 0], [info.width - 1, 0], [0, info.height - 1], [info.width - 1, info.height - 1]].map(([x, y]) => { const i = (y * info.width + x) * 4; return [data[i], data[i + 1], data[i + 2]]; });
   const bg = [0, 1, 2].map(c => corners.map(p => p[c]).sort((a, b) => a - b)[1]);
   const t0 = r.t0 ?? 28, t1 = r.t1 ?? 70; // فاصله‌ی رنگی از پس‌زمینه: زیر t0 شفاف، بالای t1 کامل
+  const edge = r.edge ?? 3; // حاشیه‌ی برش شفاف می‌شود (باقی‌مانده‌ی خط قاب پنل‌ها)
   for (let i = 0; i < data.length; i += 4) {
+    const px = (i / 4) % info.width, py = Math.floor(i / 4 / info.width);
+    if (px < edge || py < edge || px >= info.width - edge || py >= info.height - edge) { data[i + 3] = 0; continue; }
     const dr = data[i] - bg[0], dg = data[i + 1] - bg[1], db = data[i + 2] - bg[2];
     const dist = Math.sqrt(dr * dr + dg * dg + db * db);
     const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];

@@ -1,7 +1,7 @@
 // دنیای سه‌بعدی: دیورامای کج‌شده‌ی رومیزی. دوربین ثابت (~۵۵ درجه، fov 30، بدون چرخش yaw)، خورشید گرم ~۳۵ درجه با سایه، نور محیطی سرد.
 import {
   Scene, OrthographicCamera, WebGLRenderer, DirectionalLight, HemisphereLight, Color, Fog, Vector3, Vector2, Raycaster, Mesh, Group,
-  VSMShadowMap, NeutralToneMapping, SRGBColorSpace, Object3D, Sprite, Plane,
+  VSMShadowMap, NeutralToneMapping, SRGBColorSpace, Object3D, Sprite,
 } from 'three';
 import type { Terrain } from '../rules/constants';
 import { makeHeight, type TerrainFn } from './height';
@@ -145,6 +145,7 @@ export class World {
   async init() {
     await Promise.all([this.scenery.load(), this.units.load(), loadProps(), this.sprites.load()]);
     this.units.sprites = this.sprites; this.scenery.sprites = this.sprites;
+    this.setTerrain(this.terrainFn, this.seed, this.skipFn, this.ownedFn);
     // نشانه‌ها با پراپ‌های واقعی از نو ساخته شوند
     for (const o of [this.campObj, this.clanCampObj, this.treasureObj, ...this.tombObjs]) if (o) { this.markerGroup.remove(o); disposeObject(o); }
     this.campObj = null; this.clanCampObj = null; this.treasureObj = null; this.tombObjs = [];
@@ -154,13 +155,13 @@ export class World {
 
   setTerrain(fn: TerrainFn, seed: number, skip: (x: number, y: number) => boolean, owned?: (x: number, y: number) => boolean) {
     this.terrainFn = fn; this.seed = seed; this.skipFn = skip; if (owned) this.ownedFn = owned;
-    this.H = makeHeight(fn, seed);
+    this.H = makeHeight(fn, seed, this.sprites.ready && this.sprites.has('units.soldier.idle'));
     if (this.chunks) this.chunks.clear(m => this.terrainGroup.remove(m));
     this.chunks = new TerrainChunks(this.H, seed);
     this.lastLoad.set(-9999, -9999);
   }
 
-  heightAt(x: number, z: number) { return this.tiles.active ? 0 : (this.H ? this.H.height(x, z) : 0); }
+  heightAt(x: number, z: number) { return this.H ? this.H.height(x, z) : 0; }
 
   resize() {
     const w = this.canvas.clientWidth || 300, h = this.canvas.clientHeight || 300;
@@ -259,7 +260,7 @@ export class World {
     const hw = this.dist / 2, hh = hw / this.aspect;
     this.camera.left = -hw; this.camera.right = hw; this.camera.top = hh; this.camera.bottom = -hh; this.camera.near = 1; this.camera.far = 400; this.camera.updateProjectionMatrix();
     const fog = this.scene.fog as Fog; fog.near = 1000; fog.far = 2000;
-    if (this.tiles.active) { this.terrainGroup.visible = false; this.sun.castShadow = false; this.composer.outline.mat.uniforms.strength.value = 0; this.composer.bloom.strength = 0.08; } else { this.terrainGroup.visible = true; }
+    if (this.sprites.ready) { this.sun.castShadow = false; this.composer.outline.mat.uniforms.strength.value = 0; this.composer.bloom.strength = 0.08; }
     // خورشید: ناحیه‌ی سایه دور هدف، با قفل به تکسل تا سایه‌ها نلرزند
     // خورشید از بالا-چپ صفحه تا سایه‌ها به پایین-راست بیفتند (مثل CoC)
     const sunDir = new Vector3().addScaledVector(RIGHT, -0.62).addScaledVector(FORWARD, 0.45).normalize().multiplyScalar(Math.cos(SUN_ELEV));
@@ -285,7 +286,7 @@ export class World {
     const changed = this.chunks.update(b.minX, b.minZ, b.maxX, b.maxZ, m => this.terrainGroup.add(m), m => this.terrainGroup.remove(m));
     if (changed || this.scenery.ready) this.scenery.populate(b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, (x, z) => this.heightAt(x, z), (x, z) => (this.tiles.active ? -1 : this.H.water(x, z)), this.seed, this.skipFn, this.camera.quaternion);
     this.monsters.populate(this.sprites, this.camera.quaternion, b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, (x, z) => this.heightAt(x, z), this.ownedFn, this.seed);
-    if (this.sprites.ready) this.tiles.populate(b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, this.camera.quaternion);
+    void this.tiles;
     if (this.markers) this.setMarkers(this.markers);
   }
 
@@ -316,11 +317,6 @@ export class World {
     const r = this.canvas.getBoundingClientRect();
     const nd = new Vector2(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1);
     this.raycaster.setFromCamera(nd, this.camera);
-    if (this.tiles.active) {
-      const p = new Vector3();
-      if (!this.raycaster.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), p)) return null;
-      return { x: Math.floor(p.x), y: Math.floor(p.z) };
-    }
     const hits = this.raycaster.intersectObjects(this.terrainGroup.children, true).filter(h => !h.object.userData.water);
     if (!hits.length) return null;
     const p = hits[0].point;

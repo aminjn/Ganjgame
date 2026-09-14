@@ -4,7 +4,7 @@ import type { Terrain } from '../rules/constants';
 import { hash2 } from '../rules/rng';
 import type { SpriteLib } from './sprites';
 
-const DENSITY: Partial<Record<Terrain, number>> = { mountain: 0.05, marsh: 0.05, danger: 0.07, hell: 0.1 };
+const DENSITY: Partial<Record<Terrain, number>> = { mountain: 0.02, marsh: 0.02, danger: 0.03, hell: 0.045 };
 const KEY: Partial<Record<Terrain, string>> = { mountain: 'monsters.mountain', marsh: 'monsters.marsh', danger: 'monsters.danger', hell: 'monsters.hell', tomb: 'monsters.tomb', treasure: 'monsters.treasure' };
 const CAP = 600;
 

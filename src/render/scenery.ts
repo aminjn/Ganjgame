@@ -77,11 +77,11 @@ const GROUP_SPRITES: Record<string, string[]> = {
   marshPlant: ['scenery.mushroom', 'scenery.mud', 'scenery.pond'], lily: ['scenery.pond'],
 };
 const TERRAIN_EXTRA: Partial<Record<Terrain, { key: string; chance: number }[]>> = {
-  danger: [{ key: 'scenery.fire', chance: 0.025 }, { key: 'scenery.bones', chance: 0.02 }, { key: 'scenery.crystal', chance: 0.01 }],
-  hell: [{ key: 'scenery.fire', chance: 0.06 }, { key: 'scenery.crystal', chance: 0.03 }],
-  mountain: [{ key: 'scenery.crystal', chance: 0.03 }, { key: 'scenery.ancient_stone', chance: 0.02 }],
-  safe: [{ key: 'scenery.sign', chance: 0.006 }],
-  plain: [{ key: 'scenery.pond', chance: 0.008 }, { key: 'scenery.ruin', chance: 0.004 }],
+  danger: [{ key: 'scenery.fire', chance: 0.012 }, { key: 'scenery.bones', chance: 0.01 }, { key: 'scenery.crystal', chance: 0.005 }],
+  hell: [{ key: 'scenery.fire', chance: 0.03 }, { key: 'scenery.crystal', chance: 0.015 }],
+  mountain: [{ key: 'scenery.crystal', chance: 0.012 }, { key: 'scenery.ancient_stone', chance: 0.008 }],
+  safe: [{ key: 'scenery.sign', chance: 0.004 }],
+  plain: [{ key: 'scenery.pond', chance: 0.005 }, { key: 'scenery.ruin', chance: 0.003 }],
 };
 
 export class Scenery {
@@ -191,7 +191,7 @@ export class Scenery {
         // جنگل‌های لکه‌ای: تراکم درخت با نویز کم‌بسامد کم و زیاد می‌شود (به‌جای پاشیدن یکنواخت)
         const clustered = /tree|pine|dead/i.test(sp.group);
         const density = clustered ? Math.max(0, Math.min(2.2, (valueNoise(x / 9, y / 9, seed + 77) - 0.3) * 3.2)) : 1;
-        if (hash2(x, y, seed + salt) >= sp.chance * density * (useSprites ? 0.45 : 1)) continue;
+        if (hash2(x, y, seed + salt) >= sp.chance * density * (useSprites ? 0.22 : 1)) continue;
         const ox0 = 0.12 + hash2(x, y, seed + salt + 2) * 0.76, oz0 = 0.12 + hash2(x, y, seed + salt + 3) * 0.76;
         if (useSprites && GROUP_SPRITES[sp.group]) {
           const keys = GROUP_SPRITES[sp.group].filter(k => this.sprites!.has(k));
