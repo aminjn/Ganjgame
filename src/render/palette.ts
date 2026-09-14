@@ -7,18 +7,18 @@ export const GROUND: Record<Terrain, Color> = {
   plain:    new Color('#79c63f'),
   mountain: new Color('#b3aa9c'),
   marsh:    new Color('#6cb45a'),
-  danger:   new Color('#8d6552'),
-  hell:     new Color('#66484a'),
+  danger:   new Color('#8e4f41'),
+  hell:     new Color('#5a2f2b'),
   tomb:     new Color('#9e93ad'),
   treasure: new Color('#e6cb7c'),
   valley:   new Color('#4c4650'),
 };
 export const GRASS_DARK = new Color('#6db335');   // لکه‌های چمن تیره‌تر (الگوی کاشیِ نرم)
-export const MARSH_FLOOR = new Color('#3f8a70');
+export const MARSH_FLOOR = new Color('#3e7d63');
 export const SAND = new Color('#e7d59a');
 export const DIRT = new Color('#d5b371');
 export const SNOW = new Color('#f2f0ea');
-export const WATER = new Color('#3ec6da');
+export const WATER = new Color('#35a8a6');
 export const ROCK_TINT = new Color('#c4bcb1');
 export const HELL_ROCK_TINT = new Color('#7a5f5a');
 export const DANGER_LEAF_TINT = new Color('#c48a5a');

@@ -110,3 +110,6 @@ header.hud .stat .ico { width: 20px; height: 20px; }
 .unit .head { display: flex; align-items: center; gap: 6px; }
 .res { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 nav.tabs button .ico { width: 22px; height: 22px; margin: 0; }
+.ico.portrait { width: 44px; height: 44px; object-fit: contain; }
+.ico.xl.portrait { width: 64px; height: 64px; }
+img.ico { object-fit: contain; }

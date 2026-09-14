@@ -41,5 +41,23 @@ const defs = `
 </svg>`;
 
 export function injectIcons() { if (!document.getElementById('ganj-icons')) { const d = document.createElement('div'); d.id = 'ganj-icons'; d.innerHTML = defs; document.body.prepend(d); } }
-export function ico(name: string, cls = ''): string { return `<svg class="ico ${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`; }
+const IMG = new Set<string>();
+export function setIconImages(names: string[]) { for (const n of names) IMG.add(n); }
+export function ico(name: string, cls = ''): string {
+  if (IMG.has(name)) return `<img class="ico ${cls}" src="assets/sprites/icons/${name}.png" alt="" />`;
+  return `<svg class="ico ${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+}
+const PORTRAITS = new Set<string>();
+export function setPortraits(types: string[]) { for (const t of types) PORTRAITS.add(t); }
+export function portrait(type: string, cls = 'lg'): string {
+  if (PORTRAITS.has(type)) return `<img class="ico ${cls} portrait" src="assets/sprites/units/${type}_idle.png" alt="" />`;
+  return ico(UNIT_ICON[type] ?? 'army', cls);
+}
+export const ARTIFACT_ICONS = ['crown', 'crystal', 'medal', 'goblet', 'mask', 'dagger', 'coin', 'necklace', 'orb', 'scroll'];
+const ARTS = new Set<string>();
+export function setArtifactIcons(names: string[]) { for (const n of names) ARTS.add(n); }
+export function artifactIcon(id: number, cls = 'lg'): string {
+  const n = ARTIFACT_ICONS[((id % 10) + 10) % 10];
+  return ARTS.has(n) ? `<img class="ico ${cls}" src="assets/sprites/artifacts/${n}.png" alt="" />` : ico('artifact', cls);
+}
 export const UNIT_ICON: Record<string, string> = { soldier: 'soldier', guard: 'guard', archer: 'archer', explorer: 'explorer', guide: 'guide' };

@@ -26,7 +26,7 @@ for (const r of regions) {
     const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
     // پیکسل‌های خیلی تیره‌ی کم‌اشباع = پس‌زمینه؛ خط دور سیاه اثر (که کنار رنگ‌های روشن است) با ماسک فاصله حفظ می‌شود
     const a = Math.max(0, Math.min(1, (dist - t0) / (t1 - t0)));
-    data[i + 3] = Math.round(255 * (lum < 22 && dist < t1 ? Math.min(a, 0.35) : a));
+    data[i + 3] = Math.round(255 * (lum < 26 && dist < t1 ? 0 : a));
   }
   const out = join(outDir, r.file);
   mkdirSync(dirname(out), { recursive: true });

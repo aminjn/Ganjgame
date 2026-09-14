@@ -38,7 +38,7 @@ export class SpriteLib {
     const g = new Group();
     const tex = d.frames && d.frames > 1 ? t.clone() : t;
     if (d.frames && d.frames > 1) { tex.repeat.set(1 / (d.cols ?? d.frames), 1); tex.needsUpdate = true; }
-    const s = new Sprite(new SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.08, depthWrite: true }));
+    const s = new Sprite(new SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.45, depthWrite: true }));
     s.center.set(0.5, d.anchor ?? 0.02);
     s.scale.set(d.w, d.h, 1);
     s.position.y = 0.01;
@@ -67,7 +67,7 @@ export class SpriteLib {
   makeInstanced(path: string, cap: number, camQuat: Quaternion): { mesh: InstancedMesh; def: SpriteDef } | null {
     const t = this.textures.get(path), d = this.defs.get(path); if (!t || !d) return null;
     const geo = new PlaneGeometry(d.w, d.h); geo.translate(0, d.h / 2, 0);
-    const mat = new MeshBasicMaterial({ map: t, transparent: true, alphaTest: 0.1, depthWrite: true });
+    const mat = new MeshBasicMaterial({ map: t, transparent: true, alphaTest: 0.45, depthWrite: true });
     const im = new InstancedMesh(geo, mat, cap); im.count = 0; im.frustumCulled = false;
     im.userData.quat = camQuat.clone();
     return { mesh: im, def: d };

@@ -13,7 +13,7 @@ import { Rng } from '../rules/rng';
 import { World, type Markers } from '../render/world';
 import { loadSettings, readCmd, readSeason, writeSeason, readTickets, writeTickets, readStateRaw, writeStateRaw, readLock, writeLock, type Ticket } from './storage';
 import { drawTerrainPreview, drawOverlay, MINI_COLORS } from './minimap';
-import { ico, UNIT_ICON } from './icons';
+import { ico, UNIT_ICON, portrait, artifactIcon, setIconImages, setPortraits, setArtifactIcons } from './icons';
 
 type Tab = 'map' | 'army' | 'shop' | 'wallet' | 'artifacts' | 'clan' | 'dashboard';
 const TABS: { id: Tab; label: string; icon: string }[] = [
@@ -59,6 +59,10 @@ export class Game {
     this.world.start();
     this.renderAll();
     await this.world.init();
+    // آیکون‌ها و پرتره‌های شیت مرجع در رابط
+    setIconImages(['coin', 'toman', 'energy', 'artifact', 'level'].filter(n => this.world.sprites.has('icons.' + n)));
+    setPortraits(ALL_UNITS.filter(u => this.world.sprites.has(`units.${u}.idle`)));
+    setArtifactIcons(['crown', 'crystal', 'medal', 'goblet', 'mask', 'dagger', 'coin', 'necklace', 'orb', 'scroll'].filter(n => this.world.sprites.has('artifacts.' + n)));
     this.world.setFocus(focus.x, focus.y);
     this.renderMarkers();
 
@@ -76,7 +80,7 @@ export class Game {
   }
 
   applyTerrainToWorld() {
-    this.world.setTerrain((x, y) => S.terrainAt(this.st, this.gen, x, y), this.st.seed, (x, y) => !!this.st.owned[tileKey(x, y)] && false);
+    this.world.setTerrain((x, y) => S.terrainAt(this.st, this.gen, x, y), this.st.seed, () => false, (x, y) => !!this.st.owned[tileKey(x, y)]);
   }
 
   ctx(): Ctx { return { s: this.s, gen: this.gen, now: Date.now() }; }
@@ -371,7 +375,7 @@ export class Game {
   armyHtml() {
     const st = this.st, s = this.s, id = st.control, a = S.currentActor(st);
     const guardians = Object.values(st.owned).filter(o => o.owner === id && o.guardian).length;
-    const rows = ALL_UNITS.map(u => `<tr><td>${ico(UNIT_ICON[u])}${C.UNITS[u].name}</td><td class="n">${num(a.units[u])}</td><td class="n">${num(unitPowerOn(u, null, s))}</td><td>${C.UNITS[u].bonusTerrains.length ? '×' + faDigits(String(s.terrainBonus)) + ' در ' + C.UNITS[u].bonusTerrains.map(t => C.TERRAIN[t].name).join('، ') : C.UNITS[u].speed ? 'سرعت کوچ' : C.UNITS[u].luck ? 'شانس ' + faDigits(String(s.explorerLuck)) : '—'}</td></tr>`).join('');
+    const rows = ALL_UNITS.map(u => `<tr><td>${portrait(u, 'lg')}${C.UNITS[u].name}</td><td class="n">${num(a.units[u])}</td><td class="n">${num(unitPowerOn(u, null, s))}</td><td>${C.UNITS[u].bonusTerrains.length ? '×' + faDigits(String(s.terrainBonus)) + ' در ' + C.UNITS[u].bonusTerrains.map(t => C.TERRAIN[t].name).join('، ') : C.UNITS[u].speed ? 'سرعت کوچ' : C.UNITS[u].luck ? 'شانس ' + faDigits(String(s.explorerLuck)) : '—'}</td></tr>`).join('');
     const rc = S.restCost(st, s, id);
     return `<div class="card"><h3>${ico('army', 'lg')}لشگر ${id === 'clan' ? 'کلن' : ''}</h3>
       <div class="kv"><span>نیروی آزاد</span><span>${num(totalUnits(a.units))}</span><span>نگاهبان خانه‌ها (آزاد نیستند)</span><span>${num(guardians)}</span>
@@ -389,7 +393,7 @@ export class Game {
 
   shopHtml() {
     const st = this.st, s = this.s, id = st.control;
-    const items = ALL_UNITS.map(u => `<div class="unit"><div class="head">${ico(UNIT_ICON[u], 'lg')}<b>${C.UNITS[u].name}</b> <span class="res">${ico('coin')}${num(s.unitPrice[u])}</span></div><div class="muted">قدرت ${num(s.unitPower[u])}${C.UNITS[u].bonusTerrains.length ? '، ×' + faDigits(String(s.terrainBonus)) + ' در ' + C.UNITS[u].bonusTerrains.map(t => C.TERRAIN[t].name).join('، ') : ''}${C.UNITS[u].luck ? '، شانس ' + faDigits(String(s.explorerLuck)) : ''}${C.UNITS[u].speed ? '، ' + num(s.guidesForHalf) + ' نفر زمان کوچ را نصف می‌کند' : ''}</div>
+    const items = ALL_UNITS.map(u => `<div class="unit"><div class="head">${portrait(u, 'xl')}<b>${C.UNITS[u].name}</b> <span class="res">${ico('coin')}${num(s.unitPrice[u])}</span></div><div class="muted">قدرت ${num(s.unitPower[u])}${C.UNITS[u].bonusTerrains.length ? '، ×' + faDigits(String(s.terrainBonus)) + ' در ' + C.UNITS[u].bonusTerrains.map(t => C.TERRAIN[t].name).join('، ') : ''}${C.UNITS[u].luck ? '، شانس ' + faDigits(String(s.explorerLuck)) : ''}${C.UNITS[u].speed ? '، ' + num(s.guidesForHalf) + ' نفر زمان کوچ را نصف می‌کند' : ''}</div>
       <div class="qty"><input type="number" min="1" value="10" /><button class="gold" data-act="buyUnit" data-unit="${u}">خرید</button></div></div>`).join('');
     return `<div class="card"><h3>فروشگاه (${id === 'clan' ? 'با سکه‌ی خزانه‌ی کلن' : 'با سکه'})</h3><div class="kv"><span>${id === 'clan' ? 'خزانه' : 'سکه'}</span><span>${num(S.coinsOf(st, id))}</span></div></div>
       <div class="units">${items}</div>
@@ -420,8 +424,8 @@ export class Game {
   artifactsHtml() {
     const st = this.st, s = this.s;
     const av = artifactValue(st.pool, s);
-    const list = (who: ActorId) => { const a = who === 'clan' ? st.clan : st.player; if (!a) return ''; return a.artifacts.map(i => `<tr><td>${esc(st.tombs[i]?.name ?? String(i))}</td><td>${who === 'clan' ? 'به نام کلن' : 'شخصی'}</td><td class="n">${num(av)}</td></tr>`).join(''); };
-    const tombs = st.tombs.filter(t => !t.captured).map(t => `<tr><td>${esc(t.name)}</td><td class="n">(${num(t.x)}، ${num(t.y)})</td><td class="n">${num(Math.round(euclid(t.x, t.y)))}</td><td><button data-act="focusTile" data-x="${t.x}" data-y="${t.y}">نمایش</button></td></tr>`).join('');
+    const list = (who: ActorId) => { const a = who === 'clan' ? st.clan : st.player; if (!a) return ''; return a.artifacts.map(i => `<tr><td>${artifactIcon(i)}${esc(st.tombs[i]?.name ?? String(i))}</td><td>${who === 'clan' ? 'به نام کلن' : 'شخصی'}</td><td class="n">${num(av)}</td></tr>`).join(''); };
+    const tombs = st.tombs.filter(t => !t.captured).map(t => `<tr><td>${artifactIcon(t.id)}${esc(t.name)}</td><td class="n">(${num(t.x)}، ${num(t.y)})</td><td class="n">${num(Math.round(euclid(t.x, t.y)))}</td><td><button data-act="focusTile" data-x="${t.x}" data-y="${t.y}">نمایش</button></td></tr>`).join('');
     return `<div class="card"><h3>${ico('artifact', 'lg')}آرتیفکت‌های تو</h3><p class="muted">ارزش هر آرتیفکت = ${pct(s.artifactShare)} استخر = ${num(av)} تومان. در پایان فصل خودکار فروخته می‌شود؛ شخصی کامل به خودت، کلنی به نسبت سهم. فروش دستی وجود ندارد.</p>
       <table><tr><th>نام</th><th>مالکیت</th><th>ارزش (تومان)</th></tr>${list('player')}${list('clan')}${!st.player.artifacts.length && !st.clan?.artifacts.length ? '<tr><td class="muted" colspan="3">هنوز آرتیفکتی نداری</td></tr>' : ''}</table>
       <div class="kv"><span>آرتیفکت برای شرط گنج</span><span>${num(S.artifactCount(st, st.control))} از ${num(s.treasureArtifacts)}</span></div></div>
@@ -435,7 +439,7 @@ export class Game {
       <form data-act="createClan" class="row"><input name="clanName" placeholder="نام کلن" /><button class="primary">ساخت کلن</button></form></div>`;
     const shares = S.clanShares(st);
     const members = c.members.map(m => `<tr><td>${esc(m.name)}${m.name === c.commander ? ' (فرمانده)' : ''}</td><td class="n">${num(m.weight)}</td><td class="n">${pct(shares.find(x => x.name === m.name)?.share ?? 0)}</td></tr>`).join('');
-    const donate = ALL_UNITS.map(u => `<div class="unit"><div class="head">${ico(UNIT_ICON[u], 'lg')}<b>${C.UNITS[u].name}</b></div> <span class="muted">تو: ${num(st.player.units[u])} — کلن: ${num(c.units[u])}</span><div class="qty"><input type="number" min="1" value="1" /><button data-act="donate" data-unit="${u}">اهدا</button></div></div>`).join('');
+    const donate = ALL_UNITS.map(u => `<div class="unit"><div class="head">${portrait(u, 'lg')}<b>${C.UNITS[u].name}</b></div> <span class="muted">تو: ${num(st.player.units[u])} — کلن: ${num(c.units[u])}</span><div class="qty"><input type="number" min="1" value="1" /><button data-act="donate" data-unit="${u}">اهدا</button></div></div>`).join('');
     const lvl = S.levelOf(st, s, 'clan');
     const nextVote = new Date(c.createdAt + s.electionDays * 86400000);
     return `<div class="card"><h3>کلن «${esc(c.name)}»</h3>

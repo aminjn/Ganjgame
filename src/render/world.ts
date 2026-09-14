@@ -8,9 +8,11 @@ import { makeHeight, type TerrainFn } from './height';
 import { TerrainChunks } from './terrainMesh';
 import { Scenery } from './scenery';
 import { makeCamp, makeCaravan, makeTomb, makeTreasure, makeSelection, makeLabel, buildOwnedOverlay, makeFlag, disposeObject, loadProps } from './markers';
+import { TorusGeometry, MeshBasicMaterial } from 'three';
 import { Units } from './units';
 import { Territory } from './territory';
 import { SpriteLib } from './sprites';
+import { Monsters } from './monsters';
 import type { UnitType } from '../rules/constants';
 import { makeComposer } from './post';
 import { PLAYER_COLOR, CLAN_COLOR } from './palette';
@@ -51,6 +53,8 @@ export class World {
   private units = new Units();
   private territory = new Territory();
   sprites = new SpriteLib();
+  private monsters = new Monsters();
+  private ownedFn: (x: number, y: number) => boolean = () => false;
   private spriteObjs: Group[] = [];
   private lastFrame = performance.now();
   private terrainGroup = new Group();
@@ -124,6 +128,7 @@ export class World {
     this.scene.add(this.scenery.group);
     this.scene.add(this.units.group);
     this.scene.add(this.territory.group);
+    this.scene.add(this.monsters.group);
 
     this.composer = makeComposer(this.renderer, this.scene, this.camera, 2, 2, mobile);
     this.resize();
@@ -133,7 +138,7 @@ export class World {
 
   async init() {
     await Promise.all([this.scenery.load(), this.units.load(), loadProps(), this.sprites.load()]);
-    this.units.sprites = this.sprites;
+    this.units.sprites = this.sprites; this.scenery.sprites = this.sprites;
     // نشانه‌ها با پراپ‌های واقعی از نو ساخته شوند
     for (const o of [this.campObj, this.clanCampObj, this.treasureObj, ...this.tombObjs]) if (o) { this.markerGroup.remove(o); disposeObject(o); }
     this.campObj = null; this.clanCampObj = null; this.treasureObj = null; this.tombObjs = [];
@@ -141,8 +146,8 @@ export class World {
     if (this.markers) this.setMarkers(this.markers);
   }
 
-  setTerrain(fn: TerrainFn, seed: number, skip: (x: number, y: number) => boolean) {
-    this.terrainFn = fn; this.seed = seed; this.skipFn = skip;
+  setTerrain(fn: TerrainFn, seed: number, skip: (x: number, y: number) => boolean, owned?: (x: number, y: number) => boolean) {
+    this.terrainFn = fn; this.seed = seed; this.skipFn = skip; if (owned) this.ownedFn = owned;
     this.H = makeHeight(fn, seed);
     if (this.chunks) this.chunks.clear(m => this.terrainGroup.remove(m));
     this.chunks = new TerrainChunks(this.H, seed);
@@ -197,7 +202,9 @@ export class World {
     if (car) {
       if (!this.caravanObj || this.caravanObj.userData.clan !== car.clan) {
         if (this.caravanObj) { this.markerGroup.remove(this.caravanObj); disposeObject(this.caravanObj); }
-        this.caravanObj = makeCaravan(car.clan ? CLAN_COLOR : PLAYER_COLOR); this.caravanObj.userData.clan = car.clan; this.markerGroup.add(this.caravanObj);
+        const sp = this.sprites.make('buildings.caravan');
+        this.caravanObj = sp ?? makeCaravan(car.clan ? CLAN_COLOR : PLAYER_COLOR); this.caravanObj.userData.clan = car.clan; this.markerGroup.add(this.caravanObj);
+        if (sp) { const ring = new Mesh(new TorusGeometry(1.1, 0.04, 6, 40), new MeshBasicMaterial({ color: car.clan ? CLAN_COLOR : PLAYER_COLOR })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.03; sp.add(ring); sp.userData.ring = ring; }
       }
       const x = car.from.x + (car.to.x - car.from.x) * car.progress + 0.5, z = car.from.y + (car.to.y - car.from.y) * car.progress + 0.5;
       const h = this.heightAt(x, z);
@@ -271,7 +278,8 @@ export class World {
     if (!moved) return;
     this.lastLoad.set(this.target.x, this.target.z); this.lastLoadZoom = this.zoom;
     const changed = this.chunks.update(b.minX, b.minZ, b.maxX, b.maxZ, m => this.terrainGroup.add(m), m => this.terrainGroup.remove(m));
-    if (changed || this.scenery.ready) this.scenery.populate(b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, (x, z) => this.H.height(x, z), (x, z) => this.H.water(x, z), this.seed, this.skipFn);
+    if (changed || this.scenery.ready) this.scenery.populate(b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, (x, z) => this.H.height(x, z), (x, z) => this.H.water(x, z), this.seed, this.skipFn, this.camera.quaternion);
+    this.monsters.populate(this.sprites, this.camera.quaternion, b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, (x, z) => this.H.height(x, z), this.ownedFn, this.seed);
     if (this.markers) this.setMarkers(this.markers);
   }
 

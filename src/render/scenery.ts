@@ -6,6 +6,8 @@ import {
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { hash2, valueNoise } from '../rules/rng';
+import type { SpriteLib } from './sprites';
+import { Quaternion } from 'three';
 import type { Terrain } from '../rules/constants';
 
 interface Part { geometry: BufferGeometry; material: Material; tintable: boolean }
@@ -66,8 +68,27 @@ const SPAWNS: Record<Terrain, Spawn[]> = {
   valley:   [],
 };
 
+// هر گروه صحنه‌آرایی → اسپرایت‌های شیت مرجع (اگر موجود باشند، به‌جای مدل سه‌بعدی)
+const GROUP_SPRITES: Record<string, string[]> = {
+  tree: ['scenery.tree', 'scenery.tree', 'scenery.bush'], pine: ['scenery.tree', 'scenery.big_rock'], pineSmall: ['scenery.bush', 'scenery.rock'],
+  darkTree: ['scenery.dead_tree', 'scenery.tree'], dead: ['scenery.dead_tree', 'scenery.bones', 'scenery.small_ruin'],
+  rockBig: ['scenery.big_rock', 'scenery.ruin', 'scenery.ancient_stone'], rock: ['scenery.rock', 'scenery.rock', 'scenery.statue'], pebble: ['scenery.rock'],
+  bush: ['scenery.bush', 'scenery.flower'], grass: ['scenery.grass', 'scenery.grass', 'scenery.flower'], flower: ['scenery.flower'],
+  marshPlant: ['scenery.mushroom', 'scenery.mud', 'scenery.pond'], lily: ['scenery.pond'],
+};
+const TERRAIN_EXTRA: Partial<Record<Terrain, { key: string; chance: number }[]>> = {
+  danger: [{ key: 'scenery.fire', chance: 0.025 }, { key: 'scenery.bones', chance: 0.02 }, { key: 'scenery.crystal', chance: 0.01 }],
+  hell: [{ key: 'scenery.fire', chance: 0.06 }, { key: 'scenery.crystal', chance: 0.03 }],
+  mountain: [{ key: 'scenery.crystal', chance: 0.03 }, { key: 'scenery.ancient_stone', chance: 0.02 }],
+  safe: [{ key: 'scenery.sign', chance: 0.006 }],
+  plain: [{ key: 'scenery.pond', chance: 0.008 }, { key: 'scenery.ruin', chance: 0.004 }],
+};
+
 export class Scenery {
   group = new Group();
+  sprites: SpriteLib | null = null;
+  private spriteMeshes = new Map<string, InstancedMesh>();
+  private spriteCounts = new Map<string, number>();
   private models = new Map<string, Model>();
   private meshes = new Map<string, InstancedMesh[]>();
   ready = false;
@@ -133,22 +154,56 @@ export class Scenery {
     this.ready = true;
   }
 
-  populate(minX: number, minZ: number, maxX: number, maxZ: number, terrain: (x: number, y: number) => Terrain, height: (x: number, z: number) => number, water: (x: number, z: number) => number, seed: number, skip: (x: number, y: number) => boolean) {
+  private spriteMesh(key: string, camQuat: Quaternion): InstancedMesh | null {
+    if (!this.sprites?.has(key)) return null;
+    let im = this.spriteMeshes.get(key);
+    if (!im) { const r = this.sprites.makeInstanced(key, this.capacity * 2, camQuat); if (!r) return null; im = r.mesh; this.spriteMeshes.set(key, im); this.group.add(im); }
+    return im;
+  }
+  private placeSprite(key: string, wx: number, wz: number, h: number, sc: number, camQuat: Quaternion): boolean {
+    const im = this.spriteMesh(key, camQuat); if (!im) return false;
+    const n = this.spriteCounts.get(key) ?? 0; if (n >= this.capacity * 2) return true;
+    this.tmpO.position.set(wx, h, wz); this.tmpO.quaternion.copy(camQuat); this.tmpO.scale.setScalar(sc); this.tmpO.updateMatrix();
+    im.setMatrixAt(n, this.tmpO.matrix); im.count = n + 1; this.spriteCounts.set(key, n + 1);
+    return true;
+  }
+
+  populate(minX: number, minZ: number, maxX: number, maxZ: number, terrain: (x: number, y: number) => Terrain, height: (x: number, z: number) => number, water: (x: number, z: number) => number, seed: number, skip: (x: number, y: number) => boolean, camQuat?: Quaternion) {
     if (!this.ready) return;
     const counts = new Map<string, number>();
     for (const list of this.meshes.values()) for (const im of list) im.count = 0;
+    for (const im of this.spriteMeshes.values()) im.count = 0;
+    this.spriteCounts.clear();
+    const useSprites = !!(this.sprites?.ready && camQuat);
     for (let y = minZ; y <= maxZ; y++) for (let x = minX; x <= maxX; x++) {
       if (x < 0 || y < 0 || x >= 1000 || y >= 1000) continue;
       const t = terrain(x, y);
       const spawns = SPAWNS[t];
-      if (!spawns.length || skip(x, y)) continue;
+      if (skip(x, y)) continue;
+      if (useSprites && TERRAIN_EXTRA[t]) {
+        let es = 300;
+        for (const e of TERRAIN_EXTRA[t]!) { es += 7; if (hash2(x, y, seed + es) < e.chance) { const wx = x + 0.2 + hash2(x, y, seed + es + 1) * 0.6, wz = y + 0.2 + hash2(x, y, seed + es + 2) * 0.6; this.placeSprite(e.key, wx, wz, height(wx, wz), 0.8 + hash2(x, y, seed + es + 3) * 0.4, camQuat!); } }
+      }
+      if (!spawns.length) continue;
       let salt = 0;
       for (const sp of spawns) {
         salt += 17;
         // جنگل‌های لکه‌ای: تراکم درخت با نویز کم‌بسامد کم و زیاد می‌شود (به‌جای پاشیدن یکنواخت)
         const clustered = /tree|pine|dead/i.test(sp.group);
         const density = clustered ? Math.max(0, Math.min(2.2, (valueNoise(x / 9, y / 9, seed + 77) - 0.3) * 3.2)) : 1;
-        if (hash2(x, y, seed + salt) >= sp.chance * density) continue;
+        if (hash2(x, y, seed + salt) >= sp.chance * density * (useSprites ? 0.45 : 1)) continue;
+        const ox0 = 0.12 + hash2(x, y, seed + salt + 2) * 0.76, oz0 = 0.12 + hash2(x, y, seed + salt + 3) * 0.76;
+        if (useSprites && GROUP_SPRITES[sp.group]) {
+          const keys = GROUP_SPRITES[sp.group].filter(k => this.sprites!.has(k));
+          if (keys.length) {
+            const key = keys[Math.floor(hash2(x, y, seed + salt + 1) * keys.length)];
+            const wx0 = x + ox0, wz0 = y + oz0; const h0 = height(wx0, wz0);
+            if (sp.group === 'lily' && h0 > water(wx0, wz0) - 0.05) continue;
+            const sc0 = 0.8 + hash2(x, y, seed + salt + 5) * 0.4;
+            this.placeSprite(key, wx0, wz0, sp.group === 'lily' ? water(wx0, wz0) : h0, sc0, camQuat!);
+            continue;
+          }
+        }
         const names = GROUPS[sp.group];
         const name = names[Math.floor(hash2(x, y, seed + salt + 1) * names.length)];
         const model = this.models.get(name); if (!model) continue;
@@ -185,5 +240,6 @@ export class Scenery {
       }
     }
     for (const list of this.meshes.values()) for (const im of list) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; }
+    for (const im of this.spriteMeshes.values()) im.instanceMatrix.needsUpdate = true;
   }
 }

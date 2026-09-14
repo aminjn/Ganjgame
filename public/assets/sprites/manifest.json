@@ -1,7 +1,483 @@
 {
-  "_comment": "اسپرایت‌های PNG شفاف. کلید = مسیر منطقی (units.soldier.walk، buildings.camp، buildings.tower ...). w/h به واحد خانه. frames/cols/fps برای شیت انیمیشن.",
-  "units": {},
-  "buildings": {},
-  "scenery": {},
-  "monsters": {}
+ "tiles": {
+  "safe": {
+   "file": "tiles/safe.png",
+   "w": 1.12,
+   "h": 1
+  },
+  "plain": {
+   "file": "tiles/plain.png",
+   "w": 1.12,
+   "h": 1
+  },
+  "mountain": {
+   "file": "tiles/mountain.png",
+   "w": 1.12,
+   "h": 1
+  },
+  "marsh": {
+   "file": "tiles/marsh.png",
+   "w": 1.12,
+   "h": 1
+  },
+  "danger": {
+   "file": "tiles/danger.png",
+   "w": 1.12,
+   "h": 1
+  },
+  "hell": {
+   "file": "tiles/hell.png",
+   "w": 1.12,
+   "h": 1
+  },
+  "tomb": {
+   "file": "tiles/tomb.png",
+   "w": 1.12,
+   "h": 1
+  },
+  "treasure": {
+   "file": "tiles/treasure.png",
+   "w": 1.12,
+   "h": 1
+  },
+  "valley": {
+   "file": "tiles/valley.png",
+   "w": 1.11,
+   "h": 1
+  }
+ },
+ "buildings": {
+  "camp": {
+   "file": "buildings/camp.png",
+   "w": 3.41,
+   "h": 3.1
+  },
+  "clan_camp": {
+   "file": "buildings/clan_camp.png",
+   "w": 2.09,
+   "h": 2.6
+  },
+  "tomb": {
+   "file": "buildings/tomb.png",
+   "w": 1.61,
+   "h": 2.2
+  },
+  "treasure": {
+   "file": "buildings/treasure.png",
+   "w": 2.77,
+   "h": 2.9
+  },
+  "caravan": {
+   "file": "buildings/caravan.png",
+   "w": 2.18,
+   "h": 1.7
+  }
+ },
+ "artifacts": {
+  "crown": {
+   "file": "artifacts/crown.png",
+   "w": 0.89,
+   "h": 1
+  },
+  "crystal": {
+   "file": "artifacts/crystal.png",
+   "w": 0.89,
+   "h": 1
+  },
+  "medal": {
+   "file": "artifacts/medal.png",
+   "w": 0.89,
+   "h": 1
+  },
+  "goblet": {
+   "file": "artifacts/goblet.png",
+   "w": 0.89,
+   "h": 1
+  },
+  "mask": {
+   "file": "artifacts/mask.png",
+   "w": 0.89,
+   "h": 1
+  },
+  "dagger": {
+   "file": "artifacts/dagger.png",
+   "w": 0.89,
+   "h": 1
+  },
+  "coin": {
+   "file": "artifacts/coin.png",
+   "w": 0.89,
+   "h": 1
+  },
+  "necklace": {
+   "file": "artifacts/necklace.png",
+   "w": 0.89,
+   "h": 1
+  },
+  "orb": {
+   "file": "artifacts/orb.png",
+   "w": 0.89,
+   "h": 1
+  },
+  "scroll": {
+   "file": "artifacts/scroll.png",
+   "w": 0.89,
+   "h": 1
+  }
+ },
+ "scenery": {
+  "tree": {
+   "file": "scenery/tree.png",
+   "w": 0.69,
+   "h": 1.05
+  },
+  "dead_tree": {
+   "file": "scenery/dead_tree.png",
+   "w": 0.66,
+   "h": 1
+  },
+  "bush": {
+   "file": "scenery/bush.png",
+   "w": 0.39,
+   "h": 0.6
+  },
+  "rock": {
+   "file": "scenery/rock.png",
+   "w": 0.36,
+   "h": 0.55
+  },
+  "big_rock": {
+   "file": "scenery/big_rock.png",
+   "w": 0.62,
+   "h": 0.95
+  },
+  "grass": {
+   "file": "scenery/grass.png",
+   "w": 0.3,
+   "h": 0.45
+  },
+  "flower": {
+   "file": "scenery/flower.png",
+   "w": 0.33,
+   "h": 0.5
+  },
+  "mushroom": {
+   "file": "scenery/mushroom.png",
+   "w": 0.33,
+   "h": 0.5
+  },
+  "bones": {
+   "file": "scenery/bones.png",
+   "w": 0.3,
+   "h": 0.45
+  },
+  "ruin": {
+   "file": "scenery/ruin.png",
+   "w": 0.66,
+   "h": 1
+  },
+  "ancient_stone": {
+   "file": "scenery/ancient_stone.png",
+   "w": 0.58,
+   "h": 0.8
+  },
+  "sign": {
+   "file": "scenery/sign.png",
+   "w": 0.44,
+   "h": 0.6
+  },
+  "treasure_part": {
+   "file": "scenery/treasure_part.png",
+   "w": 0.44,
+   "h": 0.6
+  },
+  "pond": {
+   "file": "scenery/pond.png",
+   "w": 0.58,
+   "h": 0.8
+  },
+  "mud": {
+   "file": "scenery/mud.png",
+   "w": 0.44,
+   "h": 0.6
+  },
+  "fire": {
+   "file": "scenery/fire.png",
+   "w": 0.51,
+   "h": 0.7
+  },
+  "crystal": {
+   "file": "scenery/crystal.png",
+   "w": 0.47,
+   "h": 0.65
+  },
+  "statue": {
+   "file": "scenery/statue.png",
+   "w": 0.66,
+   "h": 0.9
+  },
+  "small_ruin": {
+   "file": "scenery/small_ruin.png",
+   "w": 0.58,
+   "h": 0.8
+  }
+ },
+ "icons": {
+  "coin": {
+   "file": "icons/coin.png",
+   "w": 1,
+   "h": 1
+  },
+  "toman": {
+   "file": "icons/toman.png",
+   "w": 0.9,
+   "h": 1
+  },
+  "energy": {
+   "file": "icons/energy.png",
+   "w": 0.9,
+   "h": 1
+  },
+  "artifact": {
+   "file": "icons/artifact.png",
+   "w": 0.9,
+   "h": 1
+  },
+  "level": {
+   "file": "icons/level.png",
+   "w": 0.9,
+   "h": 1
+  }
+ },
+ "monsters": {
+  "plain": {
+   "file": "monsters/plain.png",
+   "w": 0.86,
+   "h": 1.2
+  },
+  "mountain": {
+   "file": "monsters/mountain.png",
+   "w": 0.86,
+   "h": 1.2
+  },
+  "marsh": {
+   "file": "monsters/marsh.png",
+   "w": 0.9,
+   "h": 1.2
+  },
+  "danger": {
+   "file": "monsters/danger.png",
+   "w": 0.86,
+   "h": 1.2
+  },
+  "hell": {
+   "file": "monsters/hell.png",
+   "w": 0.83,
+   "h": 1.2
+  },
+  "treasure": {
+   "file": "monsters/treasure.png",
+   "w": 1.15,
+   "h": 1.6
+  },
+  "tomb": {
+   "file": "monsters/tomb.png",
+   "w": 0.5,
+   "h": 1.3
+  },
+  "forest": {
+   "file": "monsters/forest.png",
+   "w": 0.91,
+   "h": 1.2
+  }
+ },
+ "units": {
+  "explorer": {
+   "idle": {
+    "file": "units/explorer_idle.png",
+    "w": 0.84,
+    "h": 1.2
+   },
+   "walk": {
+    "file": "units/explorer_walk.png",
+    "w": 1.15,
+    "h": 1.15,
+    "frames": 4,
+    "cols": 4,
+    "fps": 6
+   }
+  },
+  "soldier": {
+   "idle": {
+    "file": "units/soldier_idle.png",
+    "w": 0.71,
+    "h": 1.2
+   },
+   "walk": {
+    "file": "units/soldier_walk.png",
+    "w": 1.15,
+    "h": 1.15,
+    "frames": 4,
+    "cols": 4,
+    "fps": 6
+   }
+  },
+  "guide": {
+   "idle": {
+    "file": "units/guide_idle.png",
+    "w": 0.74,
+    "h": 1.2
+   },
+   "walk": {
+    "file": "units/guide_walk.png",
+    "w": 1.15,
+    "h": 1.15,
+    "frames": 4,
+    "cols": 4,
+    "fps": 6
+   }
+  },
+  "archer": {
+   "idle": {
+    "file": "units/archer_idle.png",
+    "w": 0.79,
+    "h": 1.2
+   },
+   "walk": {
+    "file": "units/archer_walk.png",
+    "w": 1.15,
+    "h": 1.15,
+    "frames": 4,
+    "cols": 4,
+    "fps": 6
+   }
+  },
+  "guard": {
+   "idle": {
+    "file": "units/guard_idle.png",
+    "w": 0.95,
+    "h": 1.3
+   },
+   "walk": {
+    "file": "units/guard_walk.png",
+    "w": 1.15,
+    "h": 1.15,
+    "frames": 4,
+    "cols": 4,
+    "fps": 6
+   }
+  }
+ },
+ "frames": {
+  "explorer": {
+   "frame_idle": {
+    "file": "frames/explorer_frame_idle.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_walk": {
+    "file": "frames/explorer_frame_walk.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_run": {
+    "file": "frames/explorer_frame_run.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_attack": {
+    "file": "frames/explorer_frame_attack.png",
+    "w": 0.76,
+    "h": 1
+   }
+  },
+  "soldier": {
+   "frame_idle": {
+    "file": "frames/soldier_frame_idle.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_walk": {
+    "file": "frames/soldier_frame_walk.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_run": {
+    "file": "frames/soldier_frame_run.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_attack": {
+    "file": "frames/soldier_frame_attack.png",
+    "w": 0.76,
+    "h": 1
+   }
+  },
+  "guide": {
+   "frame_idle": {
+    "file": "frames/guide_frame_idle.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_walk": {
+    "file": "frames/guide_frame_walk.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_run": {
+    "file": "frames/guide_frame_run.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_attack": {
+    "file": "frames/guide_frame_attack.png",
+    "w": 0.76,
+    "h": 1
+   }
+  },
+  "archer": {
+   "frame_idle": {
+    "file": "frames/archer_frame_idle.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_walk": {
+    "file": "frames/archer_frame_walk.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_run": {
+    "file": "frames/archer_frame_run.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_attack": {
+    "file": "frames/archer_frame_attack.png",
+    "w": 0.76,
+    "h": 1
+   }
+  },
+  "guard": {
+   "frame_idle": {
+    "file": "frames/guard_frame_idle.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_walk": {
+    "file": "frames/guard_frame_walk.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_run": {
+    "file": "frames/guard_frame_run.png",
+    "w": 0.76,
+    "h": 1
+   },
+   "frame_attack": {
+    "file": "frames/guard_frame_attack.png",
+    "w": 0.76,
+    "h": 1
+   }
+  }
+ }
 }
