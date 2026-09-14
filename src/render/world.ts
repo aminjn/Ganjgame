@@ -152,8 +152,7 @@ export class World {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
-    this.composer.composer.setSize(w, h);
-    this.composer.bloom.resolution.set(Math.floor(w / 2), Math.floor(h / 2));
+    this.composer.setSize(w, h);
     // پهنای دید پایه ≈ ۱۷ کاشی (روی گوشی عمودی ارتفاع دید بیشتر است)
     const width = this.camera.aspect < 0.8 ? 10 : 16;
     this.baseDist = width / (2 * Math.tan(FOV / 2 * Math.PI / 180) * this.camera.aspect);
@@ -283,6 +282,7 @@ export class World {
     if (this.treasureObj) { const gem = this.treasureObj.userData.gem as Mesh; gem.rotation.y = t * 1.3; gem.position.y = (this.treasureObj.userData.gemBase ?? (this.treasureObj.userData.gemBase = gem.position.y)) + Math.sin(t * 2.2) * 0.06; }
     if (this.caravanObj) { this.caravanObj.position.y += 0; (this.caravanObj.userData.ring as Mesh).scale.setScalar(pulse); }
     const s = performance.now();
+    this.composer.update();
     this.composer.composer.render();
     this.frameMs = this.frameMs * 0.9 + (performance.now() - s) * 0.1;
   };
