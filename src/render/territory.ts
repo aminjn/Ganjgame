@@ -29,6 +29,7 @@ export class Territory {
   private tmp = new Object3D();
   private c = new Color();
   private spriteTower: InstancedMesh | null = null;
+  private spriteTowerClan: InstancedMesh | null = null;
   private spriteTried = false;
 
   constructor() {
@@ -45,19 +46,22 @@ export class Territory {
     // اگر اسپرایت برجک هست، بیلبورد Instanced به‌جای مدل
     if (sprites && sprites.ready && !this.spriteTried && camQuat) {
       this.spriteTried = true;
-      const r = sprites.makeInstanced('buildings.tower', CAP, camQuat);
-      if (r) { this.spriteTower = r.mesh; this.group.add(r.mesh); for (const p of this.parts) p.visible = false; }
+      const r = sprites.makeInstanced('buildings.tower', CAP, camQuat) ?? sprites.makeInstanced('markers.player_camp', CAP, camQuat);
+      const rc = sprites.makeInstanced('markers.clan_camp', CAP, camQuat);
+      if (r) { this.spriteTower = r.mesh; this.group.add(r.mesh); if (rc) { this.spriteTowerClan = rc.mesh; this.group.add(rc.mesh); } for (const p of this.parts) p.visible = false; }
     }
     if (this.spriteTower && camQuat) {
-      let k = 0;
+      let k = 0, kc = 0;
+      const clanMesh = this.spriteTowerClan ?? this.spriteTower;
       for (const t of list) {
-        if (t.camp || k >= CAP) continue;
-        const tx = t.x + 0.25, tz = t.y + 0.25;
+        if (t.camp) continue;
+        const tx = t.x + 0.28, tz = t.y + 0.28;
         this.tmp.position.set(tx, height(tx, tz), tz); this.tmp.quaternion.copy(camQuat); this.tmp.scale.setScalar(1); this.tmp.updateMatrix();
-        this.spriteTower.setMatrixAt(k, this.tmp.matrix); this.spriteTower.setColorAt(k, this.c.copy(t.clan ? CLAN_COLOR : PLAYER_COLOR).lerp(new Color('#ffffff'), 0.6));
-        k++;
+        if (t.clan && this.spriteTowerClan) { if (kc < CAP) { clanMesh.setMatrixAt(kc, this.tmp.matrix); kc++; } }
+        else if (k < CAP) { this.spriteTower.setMatrixAt(k, this.tmp.matrix); k++; }
       }
-      this.spriteTower.count = k; this.spriteTower.instanceMatrix.needsUpdate = true; if (this.spriteTower.instanceColor) this.spriteTower.instanceColor.needsUpdate = true;
+      this.spriteTower.count = k; this.spriteTower.instanceMatrix.needsUpdate = true;
+      if (this.spriteTowerClan) { this.spriteTowerClan.count = kc; this.spriteTowerClan.instanceMatrix.needsUpdate = true; }
       return;
     }
     let n = 0;

@@ -526,5 +526,71 @@
   "tileW": 1,
   "tileH": 1,
   "size": 128
+ },
+ {
+  "key": "markers.player_camp",
+  "file": "markers/player_camp.png",
+  "x": 1160,
+  "y": 686,
+  "w": 56,
+  "h": 58,
+  "tileW": 0.7,
+  "tileH": 0.7,
+  "size": 192
+ },
+ {
+  "key": "markers.clan_camp",
+  "file": "markers/clan_camp.png",
+  "x": 1225,
+  "y": 686,
+  "w": 56,
+  "h": 58,
+  "tileW": 0.7,
+  "tileH": 0.7,
+  "size": 192
+ },
+ {
+  "key": "markers.tomb",
+  "file": "markers/tomb.png",
+  "x": 1290,
+  "y": 686,
+  "w": 56,
+  "h": 58,
+  "tileW": 0.7,
+  "tileH": 0.7,
+  "size": 192
+ },
+ {
+  "key": "markers.treasure",
+  "file": "markers/treasure.png",
+  "x": 1355,
+  "y": 686,
+  "w": 56,
+  "h": 58,
+  "tileW": 0.7,
+  "tileH": 0.7,
+  "size": 192
+ },
+ {
+  "key": "markers.destination",
+  "file": "markers/destination.png",
+  "x": 1420,
+  "y": 686,
+  "w": 56,
+  "h": 58,
+  "tileW": 0.7,
+  "tileH": 0.7,
+  "size": 192
+ },
+ {
+  "key": "markers.caravan",
+  "file": "markers/caravan.png",
+  "x": 1485,
+  "y": 686,
+  "w": 56,
+  "h": 58,
+  "tileW": 0.7,
+  "tileH": 0.7,
+  "size": 192
  }
 ]

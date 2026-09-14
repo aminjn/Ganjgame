@@ -13,11 +13,10 @@ import { RingGeometry, CircleGeometry, MeshBasicMaterial, DoubleSide } from 'thr
 
 function makeRing(color: string): Group {
   const g = new Group();
-  const disc = new Mesh(new CircleGeometry(0.34, 24), new MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.28, depthWrite: false }));
-  disc.rotation.x = -Math.PI / 2; disc.position.y = 0.012; g.add(disc);
-  const ring = new Mesh(new RingGeometry(0.28, 0.36, 28), new MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false }));
-  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02; g.add(ring);
-  g.renderOrder = 2;
+  const disc = new Mesh(new CircleGeometry(0.34, 24), new MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.22, depthWrite: false, depthTest: false }));
+  disc.rotation.x = -Math.PI / 2; disc.position.y = 0.012; disc.renderOrder = 1; g.add(disc);
+  const ring = new Mesh(new RingGeometry(0.28, 0.36, 28), new MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false, depthTest: false }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02; ring.renderOrder = 1; g.add(ring);
   return g;
 }
 
@@ -72,8 +71,8 @@ export class Units {
         const im = new InstancedMesh(baked, gm, 800);
         im.count = 0; im.castShadow = true; im.frustumCulled = false;
         this.guardianMeshes.set(type, im); this.group.add(im);
-        const rg = new InstancedMesh(new RingGeometry(0.75, 0.98, 24).rotateX(-Math.PI / 2), new MeshBasicMaterial({ color: UNIT_COLOR[type], transparent: true, opacity: 0.9, depthWrite: false }), 800);
-        rg.count = 0; rg.frustumCulled = false; rg.renderOrder = 2;
+        const rg = new InstancedMesh(new RingGeometry(0.75, 0.98, 24).rotateX(-Math.PI / 2), new MeshBasicMaterial({ color: UNIT_COLOR[type], transparent: true, opacity: 0.9, depthWrite: false, depthTest: false }), 800);
+        rg.count = 0; rg.frustumCulled = false; rg.renderOrder = 1;
         this.guardianRings.set(type, rg); this.group.add(rg);
       } catch (e) { console.warn('character', type, e); }
     }));
@@ -172,13 +171,17 @@ export class Units {
     }
     if (this.spriteGuardians.size === 0) return list;
     const rest: T[] = [];
+    for (const rg of this.guardianRings.values()) rg.count = 0;
     for (const g of list) {
       const im = this.spriteGuardians.get(g.type); if (!im) { rest.push(g); continue; }
       const i = counts.get(g.type) ?? 0; if (i >= 800) continue; counts.set(g.type, i + 1);
       this.tmp.position.set(g.x, g.y, g.z); this.tmp.quaternion.copy(camQuat); this.tmp.scale.setScalar(1); this.tmp.updateMatrix();
       im.setMatrixAt(i, this.tmp.matrix); im.count = i + 1;
+      const rg = this.guardianRings.get(g.type);
+      if (rg) { this.tmp.position.set(g.x, g.y + 0.02, g.z); this.tmp.rotation.set(0, 0, 0); this.tmp.scale.setScalar(FIG_SCALE * 0.9); this.tmp.updateMatrix(); rg.setMatrixAt(i, this.tmp.matrix); rg.count = i + 1; }
     }
     for (const im of this.spriteGuardians.values()) im.instanceMatrix.needsUpdate = true;
+    for (const rg of this.guardianRings.values()) rg.instanceMatrix.needsUpdate = true;
     return rest;
   }
 }

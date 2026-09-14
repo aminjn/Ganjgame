@@ -1,7 +1,7 @@
 // دنیای سه‌بعدی: دیورامای کج‌شده‌ی رومیزی. دوربین ثابت (~۵۵ درجه، fov 30، بدون چرخش yaw)، خورشید گرم ~۳۵ درجه با سایه، نور محیطی سرد.
 import {
-  Scene, PerspectiveCamera, WebGLRenderer, DirectionalLight, HemisphereLight, Color, Fog, Vector3, Vector2, Raycaster, Mesh, Group,
-  VSMShadowMap, NeutralToneMapping, SRGBColorSpace, Object3D, Sprite,
+  Scene, OrthographicCamera, WebGLRenderer, DirectionalLight, HemisphereLight, Color, Fog, Vector3, Vector2, Raycaster, Mesh, Group,
+  VSMShadowMap, NeutralToneMapping, SRGBColorSpace, Object3D, Sprite, Plane,
 } from 'three';
 import type { Terrain } from '../rules/constants';
 import { makeHeight, type TerrainFn } from './height';
@@ -11,7 +11,7 @@ import { makeCamp, makeCaravan, makeTomb, makeTreasure, makeSelection, makeLabel
 import { TorusGeometry, MeshBasicMaterial } from 'three';
 import { Units } from './units';
 import { Territory } from './territory';
-import { SpriteLib } from './sprites';
+import { SpriteLib, TileGround } from './sprites';
 import { Monsters } from './monsters';
 import type { UnitType } from '../rules/constants';
 import { makeComposer } from './post';
@@ -32,10 +32,9 @@ export interface Markers {
   participation: P | null;
 }
 
-// نمای ایزومتریک مورب به سبک Clash of Clans: yaw ثابت ۴۵ درجه (هرگز نمی‌چرخد)، pitch ~۴۰، پرسپکتیو کم
-const PITCH = 40 * Math.PI / 180;
+// نمای ایزومتریک واقعی (اورتوگرافیک) هماهنگ با زاویه‌ی هنر شیت مرجع: yaw ثابت ۴۵ درجه (هرگز نمی‌چرخد)، pitch ۵۲ درجه
+const PITCH = 52 * Math.PI / 180;
 const YAW = 45 * Math.PI / 180;
-const FOV = 22;
 const SUN_ELEV = 48 * Math.PI / 180;
 // بردارهای پایه‌ی صفحه‌ی نمایش روی زمین
 const RIGHT = new Vector3(Math.cos(YAW), 0, -Math.sin(YAW));      // راستِ صفحه
@@ -43,7 +42,8 @@ const FORWARD = new Vector3(-Math.sin(YAW), 0, -Math.cos(YAW));   // بالای 
 
 export class World {
   scene = new Scene();
-  camera: PerspectiveCamera;
+  camera: OrthographicCamera;
+  tiles: TileGround;
   renderer: WebGLRenderer;
   private composer!: ReturnType<typeof makeComposer>;
   private sun: DirectionalLight;
@@ -71,7 +71,8 @@ export class World {
   private seed = 1;
   target = new Vector3(500, 0, 500);
   private zoom = 1;
-  private baseDist = 30;
+  private baseDist = 17;
+  private aspect = 1;
   private lastLoad = new Vector2(-9999, -9999);
   private lastLoadZoom = -1;
   private raf = 0;
@@ -101,7 +102,12 @@ export class World {
     this.renderer.toneMappingExposure = 1.0;
     this.renderer.outputColorSpace = SRGBColorSpace;
 
-    this.camera = new PerspectiveCamera(FOV, 1, 1, 400);
+    this.camera = new OrthographicCamera(-10, 10, 10, -10, 1, 400);
+    this.camera.position.set(-FORWARD.x * Math.cos(PITCH) * 100, Math.sin(PITCH) * 100, -FORWARD.z * Math.cos(PITCH) * 100);
+    this.camera.lookAt(0, 0, 0);
+    this.sprites.camQuat.copy(this.camera.quaternion);
+    this.tiles = new TileGround(this.sprites);
+    this.scene.add(this.tiles.group);
     const bg = new Color('#a9dcec');
     this.scene.background = bg;
     this.scene.fog = new Fog(bg, 60, 160);
@@ -154,22 +160,19 @@ export class World {
     this.lastLoad.set(-9999, -9999);
   }
 
-  heightAt(x: number, z: number) { return this.H ? this.H.height(x, z) : 0; }
+  heightAt(x: number, z: number) { return this.tiles.active ? 0 : (this.H ? this.H.height(x, z) : 0); }
 
   resize() {
     const w = this.canvas.clientWidth || 300, h = this.canvas.clientHeight || 300;
     this.renderer.setSize(w, h, false);
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+    this.aspect = w / h;
     this.composer.setSize(w, h);
-    // پهنای دید پایه ≈ ۱۷ کاشی (روی گوشی عمودی ارتفاع دید بیشتر است)
-    const width = this.camera.aspect < 0.8 ? 10 : 16;
-    this.baseDist = width / (2 * Math.tan(FOV / 2 * Math.PI / 180) * this.camera.aspect);
-    this.baseDist = Math.max(20, Math.min(90, this.baseDist));
+    // پهنای دید پایه به واحد جهان روی صفحه (روی گوشی عمودی باریک‌تر)
+    this.baseDist = this.aspect < 0.8 ? 11 : 17;
     this.lastLoad.set(-9999, -9999);
   }
 
-  get dist() { return this.baseDist * this.zoom; }
+  get dist() { return this.baseDist * this.zoom; } // پهنای دید (واحد جهان روی صفحه)
 
   setFocus(x: number, y: number, animate = false) {
     if (animate) { this.followTarget = new Vector3(x + 0.5, 0, y + 0.5); this.followFrames = 40; }
@@ -239,11 +242,10 @@ export class World {
 
   // ناحیه‌ی زمین که دوربین می‌بیند (به کاشی)
   viewBounds() {
-    const d = this.dist;
-    const halfH = Math.tan(FOV / 2 * Math.PI / 180) * d;
-    const halfW = halfH * this.camera.aspect;
+    const halfW = this.dist / 2;
+    const halfH = halfW / this.aspect;
     const vz = halfH / Math.sin(PITCH);
-    const r = (halfW + vz * 1.3) * 0.75 + 4;
+    const r = (halfW + vz) * 0.72 + 3;
     return {
       minX: Math.floor(this.target.x - r), maxX: Math.ceil(this.target.x + r),
       minZ: Math.floor(this.target.z - r), maxZ: Math.ceil(this.target.z + r),
@@ -251,17 +253,20 @@ export class World {
   }
 
   private updateCamera() {
-    const d = this.dist;
+    const d = 120;
     this.camera.position.set(this.target.x - FORWARD.x * Math.cos(PITCH) * d, this.target.y + Math.sin(PITCH) * d, this.target.z - FORWARD.z * Math.cos(PITCH) * d);
     this.camera.lookAt(this.target);
-    this.camera.far = d * 4; this.camera.near = Math.max(0.5, d * 0.08); this.camera.updateProjectionMatrix();
-    const fog = this.scene.fog as Fog; fog.near = d * 1.8; fog.far = d * 3.6;
+    const hw = this.dist / 2, hh = hw / this.aspect;
+    this.camera.left = -hw; this.camera.right = hw; this.camera.top = hh; this.camera.bottom = -hh; this.camera.near = 1; this.camera.far = 400; this.camera.updateProjectionMatrix();
+    const fog = this.scene.fog as Fog; fog.near = 1000; fog.far = 2000;
+    if (this.tiles.active) { this.terrainGroup.visible = false; this.sun.castShadow = false; this.composer.outline.mat.uniforms.strength.value = 0; this.composer.bloom.strength = 0.08; } else { this.terrainGroup.visible = true; }
     // خورشید: ناحیه‌ی سایه دور هدف، با قفل به تکسل تا سایه‌ها نلرزند
     // خورشید از بالا-چپ صفحه تا سایه‌ها به پایین-راست بیفتند (مثل CoC)
     const sunDir = new Vector3().addScaledVector(RIGHT, -0.62).addScaledVector(FORWARD, 0.45).normalize().multiplyScalar(Math.cos(SUN_ELEV));
     sunDir.y = Math.sin(SUN_ELEV);
     const b = this.viewBounds();
     const ext = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) * 0.5 + 3;
+    void ext;
     const sc = this.sun.shadow.camera;
     sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.updateProjectionMatrix();
     const texel = (2 * ext) / this.sun.shadow.mapSize.x;
@@ -278,8 +283,9 @@ export class World {
     if (!moved) return;
     this.lastLoad.set(this.target.x, this.target.z); this.lastLoadZoom = this.zoom;
     const changed = this.chunks.update(b.minX, b.minZ, b.maxX, b.maxZ, m => this.terrainGroup.add(m), m => this.terrainGroup.remove(m));
-    if (changed || this.scenery.ready) this.scenery.populate(b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, (x, z) => this.H.height(x, z), (x, z) => this.H.water(x, z), this.seed, this.skipFn, this.camera.quaternion);
-    this.monsters.populate(this.sprites, this.camera.quaternion, b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, (x, z) => this.H.height(x, z), this.ownedFn, this.seed);
+    if (changed || this.scenery.ready) this.scenery.populate(b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, (x, z) => this.heightAt(x, z), (x, z) => (this.tiles.active ? -1 : this.H.water(x, z)), this.seed, this.skipFn, this.camera.quaternion);
+    this.monsters.populate(this.sprites, this.camera.quaternion, b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, (x, z) => this.heightAt(x, z), this.ownedFn, this.seed);
+    if (this.sprites.ready) this.tiles.populate(b.minX, b.minZ, b.maxX, b.maxZ, this.terrainFn, this.camera.quaternion);
     if (this.markers) this.setMarkers(this.markers);
   }
 
@@ -310,6 +316,11 @@ export class World {
     const r = this.canvas.getBoundingClientRect();
     const nd = new Vector2(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1);
     this.raycaster.setFromCamera(nd, this.camera);
+    if (this.tiles.active) {
+      const p = new Vector3();
+      if (!this.raycaster.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), p)) return null;
+      return { x: Math.floor(p.x), y: Math.floor(p.z) };
+    }
     const hits = this.raycaster.intersectObjects(this.terrainGroup.children, true).filter(h => !h.object.userData.water);
     if (!hits.length) return null;
     const p = hits[0].point;
@@ -338,7 +349,7 @@ export class World {
       const dx = e.clientX - this.drag.x, dy = e.clientY - this.drag.y;
       if (!this.drag.moved && Math.hypot(dx, dy) < 6) return;
       this.drag.moved = true;
-      const upp = (2 * Math.tan(FOV / 2 * Math.PI / 180) * this.dist) / c.clientHeight; // واحد به ازای هر پیکسل
+      const upp = this.dist / c.clientWidth; // واحد به ازای هر پیکسل (اورتوگرافیک)
       const mx = -dx * upp, mf = (dy * upp) / Math.sin(PITCH);
       this.target.x = Math.max(0, Math.min(1000, this.drag.tx + RIGHT.x * mx + FORWARD.x * mf));
       this.target.z = Math.max(0, Math.min(1000, this.drag.tz + RIGHT.z * mx + FORWARD.z * mf));

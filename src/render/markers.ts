@@ -253,8 +253,8 @@ export function makeTreasure(): Group {
 }
 
 export function makeSelection(): Mesh {
-  const m = new Mesh(new TorusGeometry(0.62, 0.045, 6, 32), new MeshBasicMaterial({ color: SELECT_COLOR }));
-  m.rotation.x = Math.PI / 2;
+  const m = new Mesh(new TorusGeometry(0.62, 0.045, 6, 32), new MeshBasicMaterial({ color: SELECT_COLOR, depthTest: false, depthWrite: false }));
+  m.rotation.x = Math.PI / 2; m.renderOrder = 1;
   return m;
 }
 
@@ -291,8 +291,8 @@ export function buildOwnedOverlay(tiles: { x: number; y: number; clan: boolean }
   const g = new BufferGeometry();
   g.setAttribute('position', new Float32BufferAttribute(pos, 3));
   g.setAttribute('color', new Float32BufferAttribute(col, 3));
-  const m = new Mesh(g, new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.16, depthWrite: false }));
-  m.renderOrder = 2;
+  const m = new Mesh(g, new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.22, depthWrite: false, depthTest: false }));
+  m.renderOrder = 1;
   return m;
 }
 
