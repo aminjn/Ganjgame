@@ -181,8 +181,10 @@ function bakePose(scene: Object3D, clip: AnimationClip | undefined): BufferGeome
     }
     const bg = new BufferGeometry();
     bg.setAttribute('position', new Float32BufferAttribute(out, 3));
-    if (uv) bg.setAttribute('uv', new Float32BufferAttribute(uv.array.slice(0), 2));
-    else bg.setAttribute('uv', new Float32BufferAttribute(new Float32Array(pos.count * 2), 2));
+    // UV با getX/getY خوانده می‌شود تا صفت‌های کوانتیزه (نرمال‌شده) درست تبدیل شوند
+    const uvs = new Float32Array(pos.count * 2);
+    if (uv) for (let i = 0; i < pos.count; i++) { uvs[i * 2] = uv.getX(i); uvs[i * 2 + 1] = uv.getY(i); }
+    bg.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
     if (g.index) bg.setIndex(g.index.clone());
     bg.computeVertexNormals();
     parts.push(bg.toNonIndexed());
