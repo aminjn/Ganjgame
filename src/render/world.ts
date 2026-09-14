@@ -1,7 +1,7 @@
 // دنیای سه‌بعدی: دیورامای کج‌شده‌ی رومیزی. دوربین ثابت (~۵۵ درجه، fov 30، بدون چرخش yaw)، خورشید گرم ~۳۵ درجه با سایه، نور محیطی سرد.
 import {
   Scene, PerspectiveCamera, WebGLRenderer, DirectionalLight, HemisphereLight, Color, Fog, Vector3, Vector2, Raycaster, Mesh, Group,
-  PCFSoftShadowMap, NeutralToneMapping, SRGBColorSpace, Object3D, Sprite,
+  VSMShadowMap, NeutralToneMapping, SRGBColorSpace, Object3D, Sprite,
 } from 'three';
 import type { Terrain } from '../rules/constants';
 import { makeHeight, type TerrainFn } from './height';
@@ -29,10 +29,14 @@ export interface Markers {
   participation: P | null;
 }
 
-const PITCH = 55 * Math.PI / 180;
-const FOV = 30;
-const SUN_ELEV = 42 * Math.PI / 180;
-const SUN_AZ = 150 * Math.PI / 180;
+// نمای ایزومتریک مورب به سبک Clash of Clans: yaw ثابت ۴۵ درجه (هرگز نمی‌چرخد)، pitch ~۴۰، پرسپکتیو کم
+const PITCH = 40 * Math.PI / 180;
+const YAW = 45 * Math.PI / 180;
+const FOV = 22;
+const SUN_ELEV = 48 * Math.PI / 180;
+// بردارهای پایه‌ی صفحه‌ی نمایش روی زمین
+const RIGHT = new Vector3(Math.cos(YAW), 0, -Math.sin(YAW));      // راستِ صفحه
+const FORWARD = new Vector3(-Math.sin(YAW), 0, -Math.cos(YAW));   // بالای صفحه (دور شدن از دوربین)
 
 export class World {
   scene = new Scene();
@@ -85,7 +89,7 @@ export class World {
     this.renderer = new WebGLRenderer({ canvas, antialias: dpr < 2, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(dpr);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = PCFSoftShadowMap;
+    this.renderer.shadowMap.type = VSMShadowMap;
     this.renderer.toneMapping = NeutralToneMapping;
     this.renderer.toneMappingExposure = 1.0;
     this.renderer.outputColorSpace = SRGBColorSpace;
@@ -98,10 +102,12 @@ export class World {
     // خورشید گرم با زاویه‌ی کم (~۳۵ درجه) — سایه‌های بلند و خوانا
     this.sun = new DirectionalLight(new Color('#fff1d6'), 2.6);
     this.sun.castShadow = true;
-    const sm = mobile ? 2048 : 4096;
+    const sm = 2048;
     this.sun.shadow.mapSize.set(sm, sm);
-    this.sun.shadow.bias = -0.0004;
-    this.sun.shadow.normalBias = 0.05;
+    this.sun.shadow.bias = -0.0002;
+    this.sun.shadow.normalBias = 0.02;
+    this.sun.shadow.radius = mobile ? 3 : 5;
+    this.sun.shadow.blurSamples = mobile ? 6 : 12;
     this.sun.shadow.camera.near = 1; this.sun.shadow.camera.far = 220;
     this.scene.add(this.sun); this.scene.add(this.sun.target);
     // نور محیطی سرد و نرم: سایه‌ها آبی‌فام، نه سیاه
@@ -149,9 +155,9 @@ export class World {
     this.composer.composer.setSize(w, h);
     this.composer.bloom.resolution.set(Math.floor(w / 2), Math.floor(h / 2));
     // پهنای دید پایه ≈ ۱۷ کاشی (روی گوشی عمودی ارتفاع دید بیشتر است)
-    const width = this.camera.aspect < 0.8 ? 9 : 14;
+    const width = this.camera.aspect < 0.8 ? 10 : 16;
     this.baseDist = width / (2 * Math.tan(FOV / 2 * Math.PI / 180) * this.camera.aspect);
-    this.baseDist = Math.max(16, Math.min(56, this.baseDist));
+    this.baseDist = Math.max(20, Math.min(90, this.baseDist));
     this.lastLoad.set(-9999, -9999);
   }
 
@@ -224,22 +230,25 @@ export class World {
     const halfH = Math.tan(FOV / 2 * Math.PI / 180) * d;
     const halfW = halfH * this.camera.aspect;
     const vz = halfH / Math.sin(PITCH);
+    const r = (halfW + vz * 1.3) * 0.75 + 4;
     return {
-      minX: Math.floor(this.target.x - halfW * 1.35 - 3), maxX: Math.ceil(this.target.x + halfW * 1.35 + 3),
-      minZ: Math.floor(this.target.z - vz * 1.9 - 3), maxZ: Math.ceil(this.target.z + vz * 1.1 + 3),
+      minX: Math.floor(this.target.x - r), maxX: Math.ceil(this.target.x + r),
+      minZ: Math.floor(this.target.z - r), maxZ: Math.ceil(this.target.z + r),
     };
   }
 
   private updateCamera() {
     const d = this.dist;
-    this.camera.position.set(this.target.x, this.target.y + Math.sin(PITCH) * d, this.target.z + Math.cos(PITCH) * d);
+    this.camera.position.set(this.target.x - FORWARD.x * Math.cos(PITCH) * d, this.target.y + Math.sin(PITCH) * d, this.target.z - FORWARD.z * Math.cos(PITCH) * d);
     this.camera.lookAt(this.target);
-    this.camera.far = d * 5; this.camera.near = Math.max(0.5, d * 0.05); this.camera.updateProjectionMatrix();
-    const fog = this.scene.fog as Fog; fog.near = d * 1.6; fog.far = d * 3.4;
+    this.camera.far = d * 4; this.camera.near = Math.max(0.5, d * 0.08); this.camera.updateProjectionMatrix();
+    const fog = this.scene.fog as Fog; fog.near = d * 1.8; fog.far = d * 3.6;
     // خورشید: ناحیه‌ی سایه دور هدف، با قفل به تکسل تا سایه‌ها نلرزند
-    const sunDir = new Vector3(Math.cos(SUN_ELEV) * Math.cos(SUN_AZ), Math.sin(SUN_ELEV), Math.cos(SUN_ELEV) * Math.sin(SUN_AZ));
+    // خورشید از بالا-چپ صفحه تا سایه‌ها به پایین-راست بیفتند (مثل CoC)
+    const sunDir = new Vector3().addScaledVector(RIGHT, -0.62).addScaledVector(FORWARD, 0.45).normalize().multiplyScalar(Math.cos(SUN_ELEV));
+    sunDir.y = Math.sin(SUN_ELEV);
     const b = this.viewBounds();
-    const ext = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) * 0.55 + 4;
+    const ext = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) * 0.5 + 3;
     const sc = this.sun.shadow.camera;
     sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.updateProjectionMatrix();
     const texel = (2 * ext) / this.sun.shadow.mapSize.x;
@@ -314,8 +323,9 @@ export class World {
       if (!this.drag.moved && Math.hypot(dx, dy) < 6) return;
       this.drag.moved = true;
       const upp = (2 * Math.tan(FOV / 2 * Math.PI / 180) * this.dist) / c.clientHeight; // واحد به ازای هر پیکسل
-      this.target.x = Math.max(0, Math.min(1000, this.drag.tx - dx * upp));
-      this.target.z = Math.max(0, Math.min(1000, this.drag.tz - (dy * upp) / Math.sin(PITCH)));
+      const mx = -dx * upp, mf = (dy * upp) / Math.sin(PITCH);
+      this.target.x = Math.max(0, Math.min(1000, this.drag.tx + RIGHT.x * mx + FORWARD.x * mf));
+      this.target.z = Math.max(0, Math.min(1000, this.drag.tz + RIGHT.z * mx + FORWARD.z * mf));
     });
     const up = (e: PointerEvent) => {
       const was = this.drag;

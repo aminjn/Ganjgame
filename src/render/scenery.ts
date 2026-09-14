@@ -29,7 +29,7 @@ const KENNEY: Lib = {
     'stump_round', 'stump_old', 'log', 'log_large', 'plant_bush', 'plant_bushLarge', 'plant_bushDetailed', 'grass', 'grass_large', 'grass_leafs',
     'flower_redA', 'flower_yellowA', 'flower_purpleA', 'flower_redB', 'flower_yellowB', 'mushroom_red', 'mushroom_tan', 'mushroom_redGroup', 'lily_large', 'lily_small',
   ],
-  targetH: { tree_pineTall: 2.3, tree_pine: 1.9, tree_pineSmall: 1.2, tree_pineGround: 0.9, tree_tall: 2.0, tree_: 1.7, rock_tall: 1.2, rock_large: 0.42, rock_small: 0.22, stone_tall: 1.3, stone_large: 0.42, stone_small: 0.22, stump: 0.28, log: 0.22, plant: 0.32, grass: 0.3, flower: 0.3, mushroom: 0.22, lily: 0.1 },
+  targetH: { tree_pineTall: 1.8, tree_pine: 1.5, tree_pineSmall: 1.0, tree_pineGround: 0.8, tree_tall: 1.6, tree_: 1.35, rock_tall: 1.2, rock_large: 0.42, rock_small: 0.22, stone_tall: 1.3, stone_large: 0.42, stone_small: 0.22, stump: 0.28, log: 0.22, plant: 0.32, grass: 0.3, flower: 0.3, mushroom: 0.22, lily: 0.1 },
 };
 const QUATERNIUS: Lib = {
   base: 'assets/models/',
@@ -55,8 +55,8 @@ const GROUPS: Record<string, string[]> = {
 
 interface Spawn { group: string; chance: number; scale: [number, number]; tint?: Color; leafTint?: Color }
 const SPAWNS: Record<Terrain, Spawn[]> = {
-  safe:     [{ group: 'tree', chance: 0.07, scale: [0.85, 1.25] }, { group: 'grass', chance: 0.10, scale: [0.8, 1.3] }, { group: 'flower', chance: 0.05, scale: [0.9, 1.3] }, { group: 'pebble', chance: 0.03, scale: [0.8, 1.4] }],
-  plain:    [{ group: 'tree', chance: 0.05, scale: [0.9, 1.3] }, { group: 'bush', chance: 0.04, scale: [0.8, 1.2] }, { group: 'grass', chance: 0.12, scale: [0.8, 1.3] }, { group: 'flower', chance: 0.06, scale: [0.9, 1.3] }, { group: 'pebble', chance: 0.02, scale: [0.8, 1.4] }],
+  safe:     [{ group: 'tree', chance: 0.05, scale: [0.85, 1.2] }, { group: 'grass', chance: 0.05, scale: [0.8, 1.2] }, { group: 'flower', chance: 0.04, scale: [0.9, 1.2] }, { group: 'pebble', chance: 0.03, scale: [0.8, 1.4] }, { group: 'bush', chance: 0.02, scale: [0.8, 1.1] }],
+  plain:    [{ group: 'tree', chance: 0.04, scale: [0.9, 1.25] }, { group: 'bush', chance: 0.03, scale: [0.8, 1.2] }, { group: 'grass', chance: 0.06, scale: [0.8, 1.2] }, { group: 'flower', chance: 0.05, scale: [0.9, 1.2] }, { group: 'pebble', chance: 0.02, scale: [0.8, 1.4] }],
   mountain: [{ group: 'pine', chance: 0.16, scale: [0.8, 1.3] }, { group: 'pineSmall', chance: 0.08, scale: [0.8, 1.3] }, { group: 'rockBig', chance: 0.07, scale: [0.7, 1.4] }, { group: 'rock', chance: 0.10, scale: [0.7, 1.4] }, { group: 'pebble', chance: 0.08, scale: [0.9, 1.6] }],
   marsh:    [{ group: 'darkTree', chance: 0.10, scale: [0.8, 1.2], leafTint: new Color('#8ea86a') }, { group: 'dead', chance: 0.08, scale: [0.9, 1.3] }, { group: 'marshPlant', chance: 0.10, scale: [0.9, 1.5] }, { group: 'lily', chance: 0.16, scale: [0.7, 1.2] }, { group: 'grass', chance: 0.06, scale: [0.9, 1.3] }],
   danger:   [{ group: 'dead', chance: 0.12, scale: [0.9, 1.4], tint: new Color('#8c6a52'), leafTint: new Color('#9c6f4a') }, { group: 'darkTree', chance: 0.06, scale: [0.8, 1.2], leafTint: new Color('#a8764f') }, { group: 'rock', chance: 0.10, scale: [0.7, 1.4], tint: new Color('#9a7568') }, { group: 'rockBig', chance: 0.03, scale: [0.7, 1.2], tint: new Color('#9a7568') }, { group: 'marshPlant', chance: 0.02, scale: [0.9, 1.3] }],

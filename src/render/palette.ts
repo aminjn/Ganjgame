@@ -3,8 +3,8 @@ import { Color } from 'three';
 import type { Terrain } from '../rules/constants';
 
 export const GROUND: Record<Terrain, Color> = {
-  safe:     new Color('#8ed35c'),
-  plain:    new Color('#78c447'),
+  safe:     new Color('#86cf49'),
+  plain:    new Color('#79c63f'),
   mountain: new Color('#b3aa9c'),
   marsh:    new Color('#6cb45a'),
   danger:   new Color('#8d6552'),
@@ -13,7 +13,7 @@ export const GROUND: Record<Terrain, Color> = {
   treasure: new Color('#e6cb7c'),
   valley:   new Color('#4c4650'),
 };
-export const GRASS_DARK = new Color('#66b23c');   // لکه‌های چمن تیره‌تر (الگوی کاشیِ نرم)
+export const GRASS_DARK = new Color('#6db335');   // لکه‌های چمن تیره‌تر (الگوی کاشیِ نرم)
 export const MARSH_FLOOR = new Color('#3f8a70');
 export const SAND = new Color('#e7d59a');
 export const DIRT = new Color('#d5b371');

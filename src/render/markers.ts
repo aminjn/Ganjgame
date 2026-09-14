@@ -62,8 +62,60 @@ function stoneEnclosure(g: Group, half: number, front: string, colorBanner: stri
 }
 import { faDigits } from '../rules/format';
 
+function townHall(color: Color, clan: boolean): Group {
+  const g = new Group();
+  const stone = new MeshPhongMaterial({ color: '#c9c3b7', shininess: 8, flatShading: true });
+  const wood = new MeshPhongMaterial({ color: '#a8743f', shininess: 10 });
+  const woodDark = new MeshPhongMaterial({ color: '#6f4a2a', shininess: 6 });
+  const roof = new MeshPhongMaterial({ color: clan ? '#3fa9f5' : '#f2b52c', shininess: 30, specular: new Color('#555555'), flatShading: true });
+  const roofEdge = new MeshPhongMaterial({ color: clan ? '#1d6fb8' : '#c98a12', shininess: 20, flatShading: true });
+  const add = (geo: BufferGeometry, mat: any, x: number, y: number, z: number, ry = 0) => { const m = new Mesh(geo, mat); m.position.set(x, y, z); m.rotation.y = ry; m.castShadow = true; m.receiveShadow = true; g.add(m); return m; };
+  // پی سنگی
+  add(new BoxGeometry(1.5, 0.16, 1.5), stone, 0, 0.08, 0);
+  // بدنه‌ی چوبی با تیرهای افقی
+  add(new BoxGeometry(1.2, 0.62, 1.2), wood, 0, 0.47, 0);
+  for (let i = 0; i < 3; i++) { add(new BoxGeometry(1.26, 0.06, 1.26), woodDark, 0, 0.26 + i * 0.18, 0); }
+  // ستون‌های گوشه
+  for (const [x, z] of [[-0.6, -0.6], [0.6, -0.6], [-0.6, 0.6], [0.6, 0.6]]) add(new CylinderGeometry(0.07, 0.08, 0.7, 6), woodDark, x, 0.5, z);
+  // سقف هرمی طلایی دوطبقه با لبه
+  add(new ConeGeometry(1.15, 0.55, 4), roof, 0, 1.03, 0, Math.PI / 4);
+  add(new ConeGeometry(1.2, 0.08, 4), roofEdge, 0, 0.8, 0, Math.PI / 4);
+  add(new BoxGeometry(0.5, 0.3, 0.5), wood, 0, 1.3, 0);
+  add(new ConeGeometry(0.5, 0.32, 4), roof, 0, 1.56, 0, Math.PI / 4);
+  add(new CylinderGeometry(0.04, 0.05, 0.28, 5), woodDark, 0, 1.82, 0);
+  // در و پنجره‌ها
+  add(new BoxGeometry(0.3, 0.4, 0.05), woodDark, 0, 0.36, 0.62);
+  add(new BoxGeometry(0.2, 0.18, 0.05), new MeshBasicMaterial({ color: '#ffe9a0' }), -0.4, 0.5, 0.62);
+  add(new BoxGeometry(0.2, 0.18, 0.05), new MeshBasicMaterial({ color: '#ffe9a0' }), 0.4, 0.5, 0.62);
+  // پرچم روی نوک
+  const flag = makeFlag(color); flag.position.set(0, 1.85, 0); flag.scale.setScalar(0.8); g.add(flag);
+  return g;
+}
+
 export function makeCamp(color: Color, clan = false): Group {
   const g = new Group();
+  if (PROPS.has('fence_simple')) {
+    const half = 1.35;
+    const hall = townHall(color, clan); hall.position.set(0, 0, -0.15); g.add(hall);
+    // حصار چوبی دور پایگاه با شکاف جلو
+    const n = Math.round(2 * half);
+    for (let i = 0; i < n; i++) {
+      const x = -half + 0.5 + i;
+      part(g, 'fence_simple', 1.0, x, -half, 0);
+      if (Math.abs(x) > 0.6) part(g, 'fence_simple', 1.0, x, half, 0);
+      part(g, 'fence_simple', 1.0, -half, x, Math.PI / 2);
+      part(g, 'fence_simple', 1.0, half, x, Math.PI / 2);
+    }
+    part(g, 'campfire_logs', 0.9, 0.85, 0.75, 0);
+    part(g, 'crates_stacked', 0.2, -0.95, 0.7, 0.3);
+    part(g, 'barrel_large', 0.18, -0.95, 0.25, 0);
+    part(g, 'tent_smallOpen', 1.0, 0.95, -0.65, Math.PI * 0.6);
+    if (clan) part(g, 'tent_smallOpen', 1.0, -0.95, -0.65, Math.PI * 0.4);
+    part(g, 'torch_lit', 0.28, -0.7, half + 0.1, 0);
+    part(g, 'torch_lit', 0.28, 0.7, half + 0.1, 0);
+    const ring = new Mesh(new TorusGeometry(1.75, 0.035, 6, 40), new MeshBasicMaterial({ color })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.03; g.add(ring);
+    return g;
+  }
   if (PROPS.has('wall') && PROPS.has('tent_detailedOpen')) {
     const half = 0.98;
     // کف سنگی
@@ -239,7 +291,7 @@ export function buildOwnedOverlay(tiles: { x: number; y: number; clan: boolean }
   const g = new BufferGeometry();
   g.setAttribute('position', new Float32BufferAttribute(pos, 3));
   g.setAttribute('color', new Float32BufferAttribute(col, 3));
-  const m = new Mesh(g, new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.38, depthWrite: false }));
+  const m = new Mesh(g, new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.16, depthWrite: false }));
   m.renderOrder = 2;
   return m;
 }
