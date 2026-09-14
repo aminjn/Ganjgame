@@ -9,6 +9,7 @@ import { TerrainChunks } from './terrainMesh';
 import { Scenery } from './scenery';
 import { makeCamp, makeCaravan, makeTomb, makeTreasure, makeSelection, makeLabel, buildOwnedOverlay, makeFlag, disposeObject, loadProps } from './markers';
 import { Units } from './units';
+import { Territory } from './territory';
 import type { UnitType } from '../rules/constants';
 import { makeComposer } from './post';
 import { PLAYER_COLOR, CLAN_COLOR } from './palette';
@@ -43,6 +44,7 @@ export class World {
   private H!: ReturnType<typeof makeHeight>;
   private scenery: Scenery;
   private units = new Units();
+  private territory = new Territory();
   private lastFrame = performance.now();
   private terrainGroup = new Group();
   private markerGroup = new Group();
@@ -112,6 +114,7 @@ export class World {
     this.scenery = new Scenery(mobile);
     this.scene.add(this.scenery.group);
     this.scene.add(this.units.group);
+    this.scene.add(this.territory.group);
 
     this.composer = makeComposer(this.renderer, this.scene, this.camera, 2, 2, mobile);
     this.resize();
@@ -201,6 +204,10 @@ export class World {
     if (this.ownedMesh) { this.markerGroup.remove(this.ownedMesh); this.ownedMesh.geometry.dispose(); this.ownedMesh = null; }
     const vis = m.owned.filter(o => o.x >= view.minX - 2 && o.x <= view.maxX + 2 && o.y >= view.minZ - 2 && o.y <= view.maxZ + 2);
     if (vis.length) { this.ownedMesh = buildOwnedOverlay(vis, (x, z) => this.heightAt(x, z)); this.markerGroup.add(this.ownedMesh); }
+    // برجک و پرچم روی خانه‌های تصاحب‌شده‌ی داخل دید
+    const campKeys = new Set([m.camp ? `${m.camp.x},${m.camp.y}` : '', m.clanCamp ? `${m.clanCamp.x},${m.clanCamp.y}` : '']);
+    this.territory.set(vis.map(o => ({ x: o.x, y: o.y, clan: o.clan, camp: campKeys.has(`${o.x},${o.y}`) })), (x, z) => this.heightAt(x, z));
+
     // مسیر با شماره‌ی قدم و نشان مقصد
     for (const c of [...this.pathGroup.children]) { this.pathGroup.remove(c); if ((c as Sprite).isSprite) (c as Sprite).material.dispose(); else disposeObject(c); }
     if (m.path && m.path.length) {
