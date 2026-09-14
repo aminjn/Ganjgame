@@ -10,6 +10,7 @@ import { Scenery } from './scenery';
 import { makeCamp, makeCaravan, makeTomb, makeTreasure, makeSelection, makeLabel, buildOwnedOverlay, makeFlag, disposeObject, loadProps } from './markers';
 import { Units } from './units';
 import { Territory } from './territory';
+import { SpriteLib } from './sprites';
 import type { UnitType } from '../rules/constants';
 import { makeComposer } from './post';
 import { PLAYER_COLOR, CLAN_COLOR } from './palette';
@@ -49,6 +50,8 @@ export class World {
   private scenery: Scenery;
   private units = new Units();
   private territory = new Territory();
+  sprites = new SpriteLib();
+  private spriteObjs: Group[] = [];
   private lastFrame = performance.now();
   private terrainGroup = new Group();
   private markerGroup = new Group();
@@ -129,7 +132,8 @@ export class World {
   }
 
   async init() {
-    await Promise.all([this.scenery.load(), this.units.load(), loadProps()]);
+    await Promise.all([this.scenery.load(), this.units.load(), loadProps(), this.sprites.load()]);
+    this.units.sprites = this.sprites;
     // نشانه‌ها با پراپ‌های واقعی از نو ساخته شوند
     for (const o of [this.campObj, this.clanCampObj, this.treasureObj, ...this.tombObjs]) if (o) { this.markerGroup.remove(o); disposeObject(o); }
     this.campObj = null; this.clanCampObj = null; this.treasureObj = null; this.tombObjs = [];
@@ -176,14 +180,15 @@ export class World {
   setMarkers(m: Markers) {
     this.markers = m;
     const place = (o: Object3D, p: P, lift = 0) => { o.position.set(p.x + 0.5, this.heightAt(p.x + 0.5, p.y + 0.5) + lift, p.y + 0.5); };
-    if (m.camp) { if (!this.campObj) { this.campObj = makeCamp(PLAYER_COLOR); this.markerGroup.add(this.campObj); } place(this.campObj, m.camp); }
-    if (m.clanCamp) { if (!this.clanCampObj) { this.clanCampObj = makeCamp(CLAN_COLOR, true); this.markerGroup.add(this.clanCampObj); } place(this.clanCampObj, m.clanCamp); }
+    const build = (key: string, fallback: () => Group): Group => { const sp = this.sprites.make('buildings.' + key); if (sp) { this.spriteObjs.push(sp); return sp; } return fallback(); };
+    if (m.camp) { if (!this.campObj) { this.campObj = build('camp', () => makeCamp(PLAYER_COLOR)); this.markerGroup.add(this.campObj); } place(this.campObj, m.camp); }
+    if (m.clanCamp) { if (!this.clanCampObj) { this.clanCampObj = build('clan_camp', () => makeCamp(CLAN_COLOR, true)); this.markerGroup.add(this.clanCampObj); } place(this.clanCampObj, m.clanCamp); }
     else if (this.clanCampObj) { this.markerGroup.remove(this.clanCampObj); this.clanCampObj = null; }
     // مقبره‌ها
-    while (this.tombObjs.length < m.tombs.length) { const t = makeTomb(); this.tombObjs.push(t); this.markerGroup.add(t); }
+    while (this.tombObjs.length < m.tombs.length) { const t = build('tomb', makeTomb); this.tombObjs.push(t); this.markerGroup.add(t); }
     while (this.tombObjs.length > m.tombs.length) { const t = this.tombObjs.pop()!; this.markerGroup.remove(t); disposeObject(t); }
     m.tombs.forEach((p, i) => place(this.tombObjs[i], p));
-    if (!this.treasureObj) { this.treasureObj = makeTreasure(); this.markerGroup.add(this.treasureObj); }
+    if (!this.treasureObj) { this.treasureObj = build('treasure', makeTreasure); this.markerGroup.add(this.treasureObj); }
     place(this.treasureObj, m.treasure);
     if (m.participation) { if (!this.participationObj) { this.participationObj = makeFlag(new Color('#7CFC9A')); this.markerGroup.add(this.participationObj); } place(this.participationObj, m.participation); }
     const view = this.viewBounds();
@@ -204,14 +209,16 @@ export class World {
     } else { if (this.caravanObj) { this.markerGroup.remove(this.caravanObj); this.caravanObj = null; } this.units.setCaravan(0, 0, 0, 0, m.caravanUnits, false, false); }
     // نگاهبان‌ها روی خانه‌های تصاحب‌شده‌ی داخل دید
     const gv = m.guardians.filter(g => g.x >= view.minX - 2 && g.x <= view.maxX + 2 && g.y >= view.minZ - 2 && g.y <= view.maxZ + 2);
-    this.units.setGuardians(gv.map(g => { const gx = g.x + 0.5 + Math.sin(g.x * 12.9 + g.y * 3.1) * 0.22, gz = g.y + 0.5 + Math.cos(g.x * 5.3 + g.y * 7.7) * 0.22; return { x: gx, y: this.heightAt(gx, gz), z: gz, type: g.type, rot: (g.x * 7 + g.y * 13) % 6.28 }; }));
+    const gl = gv.map(g => { const gx = g.x + 0.5 + Math.sin(g.x * 12.9 + g.y * 3.1) * 0.22, gz = g.y + 0.5 + Math.cos(g.x * 5.3 + g.y * 7.7) * 0.22; return { x: gx, y: this.heightAt(gx, gz), z: gz, type: g.type, rot: (g.x * 7 + g.y * 13) % 6.28 }; });
+    this.units.setGuardians(this.units.setGuardianSprites(gl, this.camera.quaternion));
+    void (() => gv.map(g => { const gx = g.x + 0.5 + Math.sin(g.x * 12.9 + g.y * 3.1) * 0.22, gz = g.y + 0.5 + Math.cos(g.x * 5.3 + g.y * 7.7) * 0.22; return { x: gx, y: this.heightAt(gx, gz), z: gz, type: g.type, rot: (g.x * 7 + g.y * 13) % 6.28 }; }));
     // خانه‌های خودی
     if (this.ownedMesh) { this.markerGroup.remove(this.ownedMesh); this.ownedMesh.geometry.dispose(); this.ownedMesh = null; }
     const vis = m.owned.filter(o => o.x >= view.minX - 2 && o.x <= view.maxX + 2 && o.y >= view.minZ - 2 && o.y <= view.maxZ + 2);
     if (vis.length) { this.ownedMesh = buildOwnedOverlay(vis, (x, z) => this.heightAt(x, z)); this.markerGroup.add(this.ownedMesh); }
     // برجک و پرچم روی خانه‌های تصاحب‌شده‌ی داخل دید
     const campKeys = new Set([m.camp ? `${m.camp.x},${m.camp.y}` : '', m.clanCamp ? `${m.clanCamp.x},${m.clanCamp.y}` : '']);
-    this.territory.set(vis.map(o => ({ x: o.x, y: o.y, clan: o.clan, camp: campKeys.has(`${o.x},${o.y}`) })), (x, z) => this.heightAt(x, z));
+    this.territory.set(vis.map(o => ({ x: o.x, y: o.y, clan: o.clan, camp: campKeys.has(`${o.x},${o.y}`) })), (x, z) => this.heightAt(x, z), this.sprites, this.camera.quaternion);
 
     // مسیر با شماره‌ی قدم و نشان مقصد
     for (const c of [...this.pathGroup.children]) { this.pathGroup.remove(c); if ((c as Sprite).isSprite) (c as Sprite).material.dispose(); else disposeObject(c); }
@@ -278,8 +285,9 @@ export class World {
     this.loadAround();
     const pulse = 0.9 + Math.sin(t * 4) * 0.1;
     this.selection.scale.setScalar(pulse);
-    for (const tb of this.tombObjs) { const cap = tb.userData.cap as Mesh; cap.rotation.y = t; cap.position.y = (tb.userData.capBase ?? (tb.userData.capBase = cap.position.y)) + Math.sin(t * 2) * 0.05; }
-    if (this.treasureObj) { const gem = this.treasureObj.userData.gem as Mesh; gem.rotation.y = t * 1.3; gem.position.y = (this.treasureObj.userData.gemBase ?? (this.treasureObj.userData.gemBase = gem.position.y)) + Math.sin(t * 2.2) * 0.06; }
+    for (const sp of this.spriteObjs) this.sprites.animate(sp, t);
+    for (const tb of this.tombObjs) { const cap = tb.userData.cap as Mesh | undefined; if (!cap) continue; cap.rotation.y = t; cap.position.y = (tb.userData.capBase ?? (tb.userData.capBase = cap.position.y)) + Math.sin(t * 2) * 0.05; }
+    if (this.treasureObj && this.treasureObj.userData.gem) { const gem = this.treasureObj.userData.gem as Mesh; gem.rotation.y = t * 1.3; gem.position.y = (this.treasureObj.userData.gemBase ?? (this.treasureObj.userData.gemBase = gem.position.y)) + Math.sin(t * 2.2) * 0.06; }
     if (this.caravanObj) { this.caravanObj.position.y += 0; (this.caravanObj.userData.ring as Mesh).scale.setScalar(pulse); }
     const s = performance.now();
     this.composer.update();

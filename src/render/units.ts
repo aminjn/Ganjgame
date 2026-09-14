@@ -8,6 +8,7 @@ import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.j
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { UnitType } from '../rules/constants';
 import { makeLabel } from './markers';
+import type { SpriteLib } from './sprites';
 import { RingGeometry, CircleGeometry, MeshBasicMaterial, DoubleSide } from 'three';
 
 function makeRing(color: string): Group {
@@ -32,7 +33,7 @@ const FIG_SCALE = 0.36; // قد کاراکتر ≈ ۰٫۹ کاشی (مثل CoC،
 export const UNIT_COLOR: Record<UnitType, string> = { soldier: '#4aa3ff', guard: '#ff6b3d', archer: '#7ee04f', explorer: '#c58bff', guide: '#ffd23f' };
 
 interface Template { scene: Object3D; clips: Record<string, AnimationClip>; material: MeshLambertMaterial; baked: BufferGeometry }
-interface Figure { type: UnitType; obj: Object3D; mixer: AnimationMixer; label: ReturnType<typeof makeLabel>; ring: Group; count: number; moving: boolean }
+interface Figure { type: UnitType; obj: Object3D; mixer: AnimationMixer | null; label: ReturnType<typeof makeLabel>; ring: Group; count: number; moving: boolean; sprite?: Group }
 
 export class Units {
   group = new Group();
@@ -43,6 +44,9 @@ export class Units {
   private guardianMeshes = new Map<UnitType, InstancedMesh>();
   private guardianRings = new Map<UnitType, InstancedMesh>();
   ready = false;
+  sprites: SpriteLib | null = null;
+  private spriteGuardians = new Map<UnitType, InstancedMesh>();
+  private time = 0;
   private tmp = new Object3D();
 
   constructor() { this.group.add(this.caravan); }
@@ -93,19 +97,20 @@ export class Units {
     this.caravan.position.set(x, y, z);
     const present = ORDER.filter(t => (counts[t] || 0) > 0);
     // حذف پیکره‌های غایب
-    for (const [t, f] of this.figures) if (!present.includes(t)) { this.caravan.remove(f.obj); this.caravan.remove(f.label); this.caravan.remove(f.ring); f.mixer.stopAllAction(); this.figures.delete(t); }
+    for (const [t, f] of this.figures) if (!present.includes(t)) { this.caravan.remove(f.obj); this.caravan.remove(f.label); this.caravan.remove(f.ring); f.mixer?.stopAllAction(); this.figures.delete(t); }
     present.forEach((t, i) => {
       let f = this.figures.get(t);
-      const tpl = this.templates.get(t); if (!tpl) return;
+      const tpl = this.templates.get(t); if (!tpl && !this.sprites?.has(`units.${t}.idle`)) return;
+      if (!tpl) return;
       if (!f) {
-        const obj = skeletonClone(tpl.scene);
-        obj.scale.setScalar(FIG_SCALE);
-        this.attachWeapons(obj, t);
-        const mixer = new AnimationMixer(obj);
+        const spr = this.sprites?.make(`units.${t}.${moving ? 'walk' : 'idle'}`) ?? null;
+        const obj: Object3D = spr ?? skeletonClone(tpl.scene);
+        if (!spr) { obj.scale.setScalar(FIG_SCALE); this.attachWeapons(obj, t); }
+        const mixer = spr ? null : new AnimationMixer(obj);
         const label = makeLabel('', '#1c1710', UNIT_COLOR[t]);
         label.scale.setScalar(0.28);
         const ring = makeRing(UNIT_COLOR[t]);
-        f = { type: t, obj, mixer, label, ring, count: -1, moving: !moving };
+        f = { type: t, obj, mixer, label, ring, count: -1, moving: !moving, sprite: spr ?? undefined };
         this.caravan.add(obj); this.caravan.add(label); this.caravan.add(ring);
         this.figures.set(t, f);
       }
@@ -123,9 +128,15 @@ export class Units {
       if (f.count !== counts[t]) { f.count = counts[t]; const nl = makeLabel('×' + String(counts[t]), '#1c1710', UNIT_COLOR[t]); f.label.material.map = nl.material.map; f.label.material.needsUpdate = true; nl.material.dispose(); }
       if (f.moving !== moving) {
         f.moving = moving;
-        f.mixer.stopAllAction();
-        const clip = tpl.clips[moving ? 'Walking_A' : 'Idle'] ?? tpl.clips['Idle'];
-        if (clip) { const a = f.mixer.clipAction(clip); a.time = i * 0.21; a.play(); }
+        if (f.sprite) {
+          // تعویض شیت idle/walk
+          const nsp = this.sprites?.make(`units.${t}.${moving ? 'walk' : 'idle'}`) ?? this.sprites?.make(`units.${t}.idle`);
+          if (nsp) { this.caravan.remove(f.obj); nsp.position.copy(f.obj.position); f.obj = nsp; f.sprite = nsp; this.caravan.add(nsp); }
+        } else if (f.mixer) {
+          f.mixer.stopAllAction();
+          const clip = tpl.clips[moving ? 'Walking_A' : 'Idle'] ?? tpl.clips['Idle'];
+          if (clip) { const a = f.mixer.clipAction(clip); a.time = i * 0.21; a.play(); }
+        }
       }
     });
   }
@@ -148,7 +159,28 @@ export class Units {
     for (const im of this.guardianRings.values()) im.instanceMatrix.needsUpdate = true;
   }
 
-  update(dt: number) { for (const f of this.figures.values()) f.mixer.update(dt); }
+  update(dt: number) { this.time += dt; for (const f of this.figures.values()) { if (f.mixer) f.mixer.update(dt); else if (f.sprite && this.sprites) this.sprites.animate(f.sprite, this.time, f.moving); } }
+
+  // نگاهبان‌های اسپرایتی (Instanced، رو به دوربین ثابت)
+  // نوع‌هایی که اسپرایت دارند بیلبورد می‌شوند؛ بقیه برای رندر سه‌بعدی برگردانده می‌شوند
+  setGuardianSprites<T extends { x: number; y: number; z: number; type: UnitType }>(list: T[], camQuat: import('three').Quaternion): T[] {
+    if (!this.sprites?.ready) return list;
+    const counts = new Map<UnitType, number>();
+    for (const t of ORDER) {
+      if (!this.spriteGuardians.has(t)) { const r = this.sprites.makeInstanced(`units.${t}.idle`, 800, camQuat); if (r) { this.spriteGuardians.set(t, r.mesh); this.group.add(r.mesh); } }
+      const im = this.spriteGuardians.get(t); if (im) im.count = 0;
+    }
+    if (this.spriteGuardians.size === 0) return list;
+    const rest: T[] = [];
+    for (const g of list) {
+      const im = this.spriteGuardians.get(g.type); if (!im) { rest.push(g); continue; }
+      const i = counts.get(g.type) ?? 0; if (i >= 800) continue; counts.set(g.type, i + 1);
+      this.tmp.position.set(g.x, g.y, g.z); this.tmp.quaternion.copy(camQuat); this.tmp.scale.setScalar(1); this.tmp.updateMatrix();
+      im.setMatrixAt(i, this.tmp.matrix); im.count = i + 1;
+    }
+    for (const im of this.spriteGuardians.values()) im.instanceMatrix.needsUpdate = true;
+    return rest;
+  }
 }
 
 function toLambert(src: any): MeshLambertMaterial {

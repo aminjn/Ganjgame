@@ -1,0 +1,7 @@
+{
+  "_comment": "اسپرایت‌های PNG شفاف. کلید = مسیر منطقی (units.soldier.walk، buildings.camp، buildings.tower ...). w/h به واحد خانه. frames/cols/fps برای شیت انیمیشن.",
+  "units": {},
+  "buildings": {},
+  "scenery": {},
+  "monsters": {}
+}

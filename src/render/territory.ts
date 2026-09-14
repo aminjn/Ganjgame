@@ -5,6 +5,8 @@ import {
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { PLAYER_COLOR, CLAN_COLOR } from './palette';
 import { hash2 } from '../rules/rng';
+import type { SpriteLib } from './sprites';
+import { Quaternion } from 'three';
 
 const CAP = 900;
 
@@ -26,6 +28,8 @@ export class Territory {
   private stone: InstancedMesh; private roof: InstancedMesh; private door: InstancedMesh; private poleM: InstancedMesh; private clothM: InstancedMesh;
   private tmp = new Object3D();
   private c = new Color();
+  private spriteTower: InstancedMesh | null = null;
+  private spriteTried = false;
 
   constructor() {
     const mk = (g: BufferGeometry, m: MeshPhongMaterial | MeshBasicMaterial) => { const im = new InstancedMesh(g, m, CAP); im.count = 0; im.castShadow = true; im.receiveShadow = true; im.frustumCulled = false; this.group.add(im); this.parts.push(im); return im; };
@@ -37,7 +41,25 @@ export class Territory {
     this.clothM.castShadow = true;
   }
 
-  set(list: { x: number; y: number; clan: boolean; camp: boolean }[], height: (x: number, z: number) => number) {
+  set(list: { x: number; y: number; clan: boolean; camp: boolean }[], height: (x: number, z: number) => number, sprites?: SpriteLib, camQuat?: Quaternion) {
+    // اگر اسپرایت برجک هست، بیلبورد Instanced به‌جای مدل
+    if (sprites && sprites.ready && !this.spriteTried && camQuat) {
+      this.spriteTried = true;
+      const r = sprites.makeInstanced('buildings.tower', CAP, camQuat);
+      if (r) { this.spriteTower = r.mesh; this.group.add(r.mesh); for (const p of this.parts) p.visible = false; }
+    }
+    if (this.spriteTower && camQuat) {
+      let k = 0;
+      for (const t of list) {
+        if (t.camp || k >= CAP) continue;
+        const tx = t.x + 0.25, tz = t.y + 0.25;
+        this.tmp.position.set(tx, height(tx, tz), tz); this.tmp.quaternion.copy(camQuat); this.tmp.scale.setScalar(1); this.tmp.updateMatrix();
+        this.spriteTower.setMatrixAt(k, this.tmp.matrix); this.spriteTower.setColorAt(k, this.c.copy(t.clan ? CLAN_COLOR : PLAYER_COLOR).lerp(new Color('#ffffff'), 0.6));
+        k++;
+      }
+      this.spriteTower.count = k; this.spriteTower.instanceMatrix.needsUpdate = true; if (this.spriteTower.instanceColor) this.spriteTower.instanceColor.needsUpdate = true;
+      return;
+    }
     let n = 0;
     for (const t of list) {
       if (t.camp || n >= CAP) continue; // کمپ خودش ساختمان دارد
