@@ -2,8 +2,10 @@
 # تنظیم دامنه/HTTPS بعد از نصب (یا تغییر آن). اجرا با root:
 #   bash deploy/set-domain.sh                      → بدون دامنه: HTTP روی IP سرور
 #   bash deploy/set-domain.sh game.example.ir me@mail.com → nginx + گواهی Let's Encrypt + HTTPS
+#   bash deploy/set-domain.sh game.example.ir --cdn      → HTTPS روی CDN آروان (گواهی روی CDN)، سرور پشت آن HTTP
 set -euo pipefail
-DOMAIN="${1:-}"; EMAIL="${2:-}"
+DOMAIN="${1:-}"; EMAIL="${2:-}"; CDN=0
+[ "$EMAIL" = "--cdn" ] && { CDN=1; EMAIL=""; }
 APP_DIR="${APP_DIR:-/opt/ganjgame}"
 ENV="$APP_DIR/server/.env"
 [ -f "$ENV" ] || { echo "فایل $ENV پیدا نشد؛ اول deploy/install.sh را اجرا کنید"; exit 1; }
@@ -22,7 +24,10 @@ nginx -t && systemctl reload nginx
 setenv PUBLIC_URL "http://${DOMAIN:-$IP}"
 setenv COOKIE_SECURE 0
 
-if [ -n "$DOMAIN" ] && [ -n "$EMAIL" ]; then
+if [ "$CDN" = "1" ] && [ -n "$DOMAIN" ]; then
+  setenv PUBLIC_URL "https://$DOMAIN"
+  echo "حالت CDN: در پنل آروان برای $DOMAIN گواهی HTTPS و WebSocket را فعال کنید؛ سرور مبدأ روی HTTP پورت ۸۰ می‌ماند."
+elif [ -n "$DOMAIN" ] && [ -n "$EMAIL" ]; then
   apt-get install -y certbot python3-certbot-nginx >/dev/null
   if certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect; then
     setenv PUBLIC_URL "https://$DOMAIN"

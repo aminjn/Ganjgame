@@ -11,7 +11,7 @@ export const GROUND: Record<Terrain, Color> = {
   hell:     new Color('#7a3328'),
   tomb:     new Color('#8a6f96'),
   treasure: new Color('#d9b45a'),
-  valley:   new Color('#4a423f'),
+  valley:   new Color('#2f2825'),
 };
 export const GRASS_DARK = new Color('#7fbf3a');   // لکه‌های چمن تیره‌تر (الگوی کاشیِ نرم)
 export const MARSH_FLOOR = new Color('#4f6b30');

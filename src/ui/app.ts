@@ -83,6 +83,7 @@ export class Game {
     $('tabs').addEventListener('click', e => { const b = (e.target as HTMLElement).closest('button'); if (b) this.setTab(b.dataset.tab as Tab); });
     document.body.addEventListener('click', e => this.onAction(e));
     document.body.addEventListener('submit', e => { e.preventDefault(); this.onAction(e); });
+    $('minimini').addEventListener('click', () => { this.showMinimap = !this.showMinimap; this.tab = 'map'; this.renderAll(); });
     this.live = new Live(m => this.onLive(m), c => { this.online = c; this.renderHud(); });
     this.live.start();
     if (sess.loggedIn) await this.refreshMe(); else this.renderModal();
@@ -177,6 +178,25 @@ export class Game {
     this.renderHud();
     this.renderMarkers();
     if (this.tab === 'map') this.renderTileCard(); else this.renderSheet();
+    if ((this.miniTick++ & 7) === 0) this.drawMiniCorner();
+  }
+  miniTick = 0;
+  miniBase: ImageData | null = null;
+  miniSeason = -1;
+  // نقشه‌ی کوچک همیشه‌نمایان گوشه‌ی نقشه: زمین + خانه‌ها + مقبره‌ها + کادر دید
+  drawMiniCorner() {
+    const c = document.getElementById('minimini') as HTMLCanvasElement | null; if (!c || !this.gen) return;
+    c.classList.toggle('hidden', this.tab !== 'map');
+    if (this.tab !== 'map') return;
+    if (!this.miniBase || this.miniSeason !== this.season.id) { this.miniBase = drawTerrainPreview(c, (x, y) => this.gen.at(x, y), 140); this.miniSeason = this.season.id; }
+    const marks: { x: number; y: number; color: string; r?: number }[] = [];
+    for (const t of this.region.tiles.values()) marks.push({ x: t.x, y: t.y, color: !t.mine ? '#ff7a5c' : t.ownerType === 'clan' ? '#4fd6ff' : '#ffd54a', r: 1 });
+    for (const t of this.season.tombs) if (!t.captured) marks.push({ x: t.x, y: t.y, color: '#b06cff', r: 2 });
+    marks.push({ x: 500, y: 500, color: '#ffd54a', r: 2 });
+    const a = this.actor; if (a?.camp) marks.push({ x: a.camp.x, y: a.camp.y, color: '#ffffff', r: 1.5 }); if (a?.pos) marks.push({ x: a.pos.x, y: a.pos.y, color: '#ff6b5a', r: 1.5 });
+    drawOverlay(c, this.miniBase, marks);
+    const ctx = c.getContext('2d')!; const f = this.world.target; const k = c.width / 1000; const b = this.world.viewBounds();
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1; ctx.strokeRect(b.minX * k, b.minZ * k, Math.max(3, (b.maxX - b.minX) * k), Math.max(3, (b.maxZ - b.minZ) * k)); void f;
   }
 
   // ---------- کنش‌ها ----------

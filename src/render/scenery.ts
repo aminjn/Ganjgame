@@ -1,8 +1,7 @@
 // صحنه‌آرایی low-poly با مدل‌های CC0: درخت‌ها و سنگ‌های Kenney Nature Kit (flat-shaded، رنگ تخت) + بوته/گیاه/سنگریزه‌ی Quaternius.
 // پراکندگی با آفست زیرکاشی، چرخش و مقیاس تصادفی — هیچ‌چیز با شبکه هم‌راستا نیست.
 import {
-  BufferGeometry, Color, InstancedMesh, Material, MeshPhongMaterial, Object3D, Group, Box3, Vector3, Mesh, DoubleSide, FrontSide, Texture, SRGBColorSpace,
-} from 'three';
+  BufferGeometry, Color, InstancedMesh, Material, MeshPhongMaterial, Object3D, Group, Box3, Vector3, Mesh, DoubleSide, FrontSide, Texture, SRGBColorSpace, CircleGeometry, MeshBasicMaterial } from 'three';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { hash2, valueNoise } from '../rules/rng';
@@ -65,7 +64,7 @@ const SPAWNS: Record<Terrain, Spawn[]> = {
   hell:     [{ group: 'rockBig', chance: 0.10, scale: [0.8, 1.6], tint: new Color('#6e5550') }, { group: 'rock', chance: 0.18, scale: [0.8, 1.6], tint: new Color('#6e5550') }, { group: 'dead', chance: 0.06, scale: [0.8, 1.2], tint: new Color('#5a4038') }],
   tomb:     [],
   treasure: [],
-  valley:   [],
+  valley:   [{ group: 'rock', chance: 0.30, scale: [0.8, 1.5], tint: new Color('#5a4a44') }, { group: 'rockBig', chance: 0.10, scale: [0.8, 1.4], tint: new Color('#5a4a44') }, { group: 'dead', chance: 0.05, scale: [0.8, 1.1], tint: new Color('#4a3a34') }],
 };
 
 // هر گروه صحنه‌آرایی → اسپرایت‌های شیت مرجع (اگر موجود باشند، به‌جای مدل سه‌بعدی)
@@ -155,6 +154,23 @@ export class Scenery {
     this.ready = true;
   }
 
+  // سایه‌ی نرم زیر هر اسپرایت (بیضی تیره روی زمین) تا اشیا روی زمین «بنشینند»
+  private shadowMesh: InstancedMesh | null = null;
+  private shadowCount = 0;
+  private shadow(): InstancedMesh {
+    if (!this.shadowMesh) {
+      const g = new CircleGeometry(0.5, 20); g.rotateX(-Math.PI / 2);
+      const im = new InstancedMesh(g, new MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.2, depthWrite: false }), this.capacity * 6);
+      im.count = 0; im.frustumCulled = false; im.renderOrder = 1;
+      this.shadowMesh = im; this.group.add(im);
+    }
+    return this.shadowMesh;
+  }
+  private placeShadow(wx: number, wz: number, h: number, rx: number, rz: number) {
+    const im = this.shadow(); if (this.shadowCount >= this.capacity * 6) return;
+    this.tmpO.position.set(wx, h + 0.015, wz); this.tmpO.quaternion.identity(); this.tmpO.scale.set(rx * 2, 1, rz * 2); this.tmpO.updateMatrix();
+    im.setMatrixAt(this.shadowCount++, this.tmpO.matrix); im.count = this.shadowCount;
+  }
   private spriteMesh(key: string, camQuat: Quaternion): InstancedMesh | null {
     if (!this.sprites?.has(key)) return null;
     let im = this.spriteMeshes.get(key);
@@ -166,6 +182,7 @@ export class Scenery {
     const n = this.spriteCounts.get(key) ?? 0; if (n >= this.capacity * 2) return true;
     this.tmpO.position.set(wx, h, wz); this.tmpO.quaternion.copy(camQuat); this.tmpO.scale.setScalar(sc); this.tmpO.updateMatrix();
     im.setMatrixAt(n, this.tmpO.matrix); im.count = n + 1; this.spriteCounts.set(key, n + 1);
+    const d = this.sprites!.def(key); if (d && !/grass|flower|fog|pond|reeds|lily/.test(key)) this.placeShadow(wx + 0.06 * sc, wz + 0.04 * sc, h, Math.min(0.55, d.w * 0.3 * sc), Math.min(0.32, d.w * 0.17 * sc));
     return true;
   }
 
@@ -174,6 +191,7 @@ export class Scenery {
     const counts = new Map<string, number>();
     for (const list of this.meshes.values()) for (const im of list) im.count = 0;
     for (const im of this.spriteMeshes.values()) im.count = 0;
+    this.shadowCount = 0; if (this.shadowMesh) this.shadowMesh.count = 0;
     this.spriteCounts.clear();
     const useSprites = !!(this.sprites?.ready && camQuat);
     for (let y = minZ; y <= maxZ; y++) for (let x = minX; x <= maxX; x++) {
@@ -192,7 +210,9 @@ export class Scenery {
         // جنگل‌های لکه‌ای: تراکم درخت با نویز کم‌بسامد کم و زیاد می‌شود (به‌جای پاشیدن یکنواخت)
         const clustered = /tree|pine|dead/i.test(sp.group);
         const density = clustered ? Math.max(0, Math.min(2.2, (valueNoise(x / 9, y / 9, seed + 77) - 0.3) * 3.2)) : 1;
-        if (hash2(x, y, seed + salt) >= sp.chance * density * (useSprites ? 0.22 : 1)) continue;
+        // با اسپرایت: درخت و سنگ کمی کمتر از مدل سه‌بعدی، ولی علف و گل و بوته بیشتر تا زمین خالی نماند
+        const spriteFactor = /tree|pine|dead|rock|bush/i.test(sp.group) ? 0.5 : 1.4;
+        if (hash2(x, y, seed + salt) >= sp.chance * density * (useSprites ? spriteFactor : 1)) continue;
         const ox0 = 0.12 + hash2(x, y, seed + salt + 2) * 0.76, oz0 = 0.12 + hash2(x, y, seed + salt + 3) * 0.76;
         if (useSprites && GROUP_SPRITES[sp.group]) {
           const keys = GROUP_SPRITES[sp.group].filter(k => this.sprites!.has(k));
@@ -242,5 +262,6 @@ export class Scenery {
     }
     for (const list of this.meshes.values()) for (const im of list) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; }
     for (const im of this.spriteMeshes.values()) im.instanceMatrix.needsUpdate = true;
+    if (this.shadowMesh) this.shadowMesh.instanceMatrix.needsUpdate = true;
   }
 }
