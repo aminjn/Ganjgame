@@ -6,6 +6,8 @@ import {
 import type { Terrain } from '../rules/constants';
 import { makeHeight, type TerrainFn } from './height';
 import { TerrainChunks } from './terrainMesh';
+import { loadGroundTextures } from './groundTextures';
+import type { GroundTextures } from './ground';
 import { Scenery } from './scenery';
 import { makeCamp, makeCaravan, makeTomb, makeTreasure, makeSelection, makeLabel, buildOwnedOverlay, makeFlag, disposeObject, loadProps } from './markers';
 import { TorusGeometry, MeshBasicMaterial } from 'three';
@@ -61,6 +63,7 @@ export class World {
   private spriteObjs: Group[] = [];
   private lastFrame = performance.now();
   private terrainGroup = new Group();
+  private groundTextures: GroundTextures = {};
   private markerGroup = new Group();
   private ownedMesh: Mesh | null = null;
   private pathGroup = new Group();
@@ -166,7 +169,7 @@ export class World {
   }
 
   async init() {
-    await Promise.all([this.scenery.load(), this.units.load(), loadProps(), this.sprites.load()]);
+    await Promise.all([this.scenery.load(), this.units.load(), loadProps(), this.sprites.load(), loadGroundTextures().then(t => { this.groundTextures = t; })]);
     this.units.sprites = this.sprites; this.scenery.sprites = this.sprites;
     this.setTerrain(this.terrainFn, this.seed, this.skipFn, this.ownedFn);
     // نشانه‌ها با پراپ‌های واقعی از نو ساخته شوند
@@ -181,6 +184,7 @@ export class World {
     this.H = makeHeight(fn, seed, this.sprites.ready && this.sprites.has('units.soldier.idle'));
     if (this.chunks) this.chunks.clear(m => this.terrainGroup.remove(m));
     this.chunks = new TerrainChunks(this.H, seed);
+    this.chunks.textures = this.groundTextures;
     this.lastLoad.set(-9999, -9999);
   }
 

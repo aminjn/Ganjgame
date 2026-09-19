@@ -3,7 +3,7 @@ import { BufferGeometry, Float32BufferAttribute, Mesh, MeshPhongMaterial, Color,
 import type { makeHeight } from './height';
 import { hash2 } from '../rules/rng';
 import { WATER } from './palette';
-import { makeGroundMaterial, makeGroundTexture, TERRAIN_ID } from './ground';
+import { makeGroundMaterial, makeGroundTexture, TERRAIN_ID, type GroundTextures } from './ground';
 
 export const CHUNK = 16;
 const SUB = 6;
@@ -12,6 +12,7 @@ export class TerrainChunks {
   material = new MeshPhongMaterial({ vertexColors: true, shininess: 6, specular: new Color('#1a1a1a') });
   waterMaterial = new MeshPhongMaterial({ color: WATER, transparent: true, opacity: 0.85, shininess: 8, specular: new Color('#3a4a2a'), depthWrite: false });
   chunks = new Map<string, Group>();
+  textures: GroundTextures = {};
   constructor(private H: ReturnType<typeof makeHeight>, private seed: number) {}
 
   private jx(_i: number, _j: number) { return 0; }
@@ -48,7 +49,7 @@ export class TerrainChunks {
     g.computeBoundingSphere();
     // زمین نقاشی‌گونه‌ی GPU در حالت کاشی؛ رنگ رأس فقط پشتیبان مدل سه‌بعدی
     let mat: any = this.material;
-    if (this.H.flat) { const size = CHUNK + 2; const tex = makeGroundTexture(size, (i, j) => TERRAIN_ID[this.H.T(x0 - 1 + i, z0 - 1 + j)]); mat = makeGroundMaterial(tex, x0 - 1, z0 - 1, size, this.seed); }
+    if (this.H.flat) { const size = CHUNK + 2; const tex = makeGroundTexture(size, (i, j) => TERRAIN_ID[this.H.T(x0 - 1 + i, z0 - 1 + j)]); mat = makeGroundMaterial(tex, x0 - 1, z0 - 1, size, this.seed, this.textures); }
     const m = new Mesh(g, mat);
     m.receiveShadow = true;
     m.userData.chunk = true;

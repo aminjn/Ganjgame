@@ -1,9 +1,14 @@
 // زمین نقاشی‌گونه (اصلاحیه‌ی ۴): بافت رویه‌ای روی GPU — چمن با لکه و خاک، سنگ با ترک، مرداب با گل و برکه،
 // سرزمین خطر خشک و ترک‌خورده، جهنم سوخته با رگه‌ی گداخته، دره‌ی عمیق. مرز زمین‌ها با نویز موج‌دار و نرم آمیخته می‌شود.
-import { DataTexture, NearestFilter, RGBAFormat, ShaderMaterial, UnsignedByteType, Vector2 } from 'three';
+import { DataTexture, NearestFilter, RGBAFormat, ShaderMaterial, UnsignedByteType, Vector2, Texture } from 'three';
 import type { Terrain } from '../rules/constants';
 
 export const TERRAIN_ID: Record<Terrain, number> = { safe: 0, plain: 1, mountain: 2, marsh: 3, danger: 4, hell: 5, tomb: 6, treasure: 7, valley: 8 };
+// بافت‌های نقاشی‌شده‌ی اختیاری (public/assets/textures/index.json): اگر باشند روی زمین می‌نشینند، وگرنه بافت رویه‌ای
+export const TEX_KEYS = ['grass', 'dry', 'rock', 'marsh', 'cracked', 'lava', 'stone', 'gold', 'chasm'] as const;
+export type TexKey = typeof TEX_KEYS[number];
+export type GroundTextures = Partial<Record<TexKey, Texture>>;
+const blank = new DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1, RGBAFormat, UnsignedByteType); blank.needsUpdate = true;
 
 const vertex = /* glsl */`
   varying vec3 vWorld;
@@ -19,6 +24,9 @@ const fragment = /* glsl */`
   uniform vec2 origin;          // مختصات خانه‌ی گوشه‌ی بافت
   uniform float texSize;
   uniform float seed;
+  uniform sampler2D tGrass, tDry, tRock, tMarsh, tCracked, tLava, tStone, tGold, tChasm;
+  uniform float hasTex[9];
+  uniform float texScale;
   varying vec3 vWorld;
 
   float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
@@ -35,6 +43,8 @@ const fragment = /* glsl */`
   vec3 terrainColor(float id, vec2 p, vec2 q) {
     vec2 s = p + seed;
     if (id < 1.5) { // چمن (امن/دشت)
+      if (id < 0.5 && hasTex[0] > 0.5) return texture2D(tGrass, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
+      if (id > 0.5 && hasTex[1] > 0.5) return texture2D(tDry, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
       float big = fbm3(s * 0.27) * 0.7 + fbm2(s * 1.1 + 33.0) * 0.3;
       vec3 dark = vec3(0.33, 0.50, 0.20), light = vec3(0.60, 0.74, 0.34);
       if (id < 0.5) { dark = vec3(0.39, 0.55, 0.23); light = vec3(0.65, 0.77, 0.37); }
@@ -49,6 +59,7 @@ const fragment = /* glsl */`
       return c;
     }
     if (id < 2.5) { // کوهستان: سنگ با ترک و سنگریزه
+      if (hasTex[2] > 0.5) return texture2D(tRock, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
       float big = fbm3(s * 0.4);
       float mid = fbm3(s * 1.3 + 15.0);
       vec3 c = mix(vec3(0.40, 0.38, 0.34), vec3(0.64, 0.61, 0.54), big * 0.6 + mid * 0.4);
@@ -61,6 +72,7 @@ const fragment = /* glsl */`
       return mix(c, vec3(0.40, 0.50, 0.28), moss * 0.45);
     }
     if (id < 3.5) { // مرداب: گل تیره، لجن، برکه
+      if (hasTex[3] > 0.5) return texture2D(tMarsh, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
       float big = fbm3(s * 0.5);
       vec3 c = mix(vec3(0.22, 0.27, 0.14), vec3(0.36, 0.42, 0.20), big);
       float pool = fbm2(s * 0.55 + 23.0);
@@ -71,6 +83,7 @@ const fragment = /* glsl */`
       return c;
     }
     if (id < 4.5) { // سرزمین خطر: خاک خشک ترک‌خورده
+      if (hasTex[4] > 0.5) return texture2D(tCracked, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
       float big = fbm3(s * 0.4);
       vec3 c = mix(vec3(0.48, 0.28, 0.20), vec3(0.70, 0.46, 0.30), big);
       float crack = abs(vnoise(s * 1.9 + 3.0) - 0.5) + 0.3 * abs(vnoise(s * 4.1 + 6.0) - 0.5);
@@ -81,6 +94,7 @@ const fragment = /* glsl */`
       return c;
     }
     if (id < 5.5) { // جهنمی: زمین سوخته با رگه‌ی گداخته
+      if (hasTex[5] > 0.5) return texture2D(tLava, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
       float big = fbm3(s * 0.5);
       vec3 c = mix(vec3(0.16, 0.10, 0.09), vec3(0.32, 0.17, 0.14), big);
       float vein = smoothstep(0.02, 0.0, abs(vnoise(s * 1.6 + 11.0) - 0.5)) * smoothstep(0.55, 0.8, fbm2(s * 0.5 + 4.0));
@@ -91,16 +105,19 @@ const fragment = /* glsl */`
       return c;
     }
     if (id < 6.5) { // مقبره: سنگفرش بنفش-خاکستری
+      if (hasTex[6] > 0.5) return texture2D(tStone, s * texScale).rgb;
       vec2 g = fract(q * 2.0); float line = smoothstep(0.0, 0.07, min(min(g.x, 1.0 - g.x), min(g.y, 1.0 - g.y)));
       vec3 c = mix(vec3(0.42, 0.34, 0.46), vec3(0.58, 0.50, 0.62), vnoise(s * 3.0));
       return c * (0.7 + 0.3 * line);
     }
     if (id < 7.5) { // خانه‌ی گنج: سنگفرش طلایی
+      if (hasTex[7] > 0.5) return texture2D(tGold, s * texScale).rgb;
       vec2 g = fract(q * 3.0); float line = smoothstep(0.0, 0.08, min(min(g.x, 1.0 - g.x), min(g.y, 1.0 - g.y)));
       vec3 c = mix(vec3(0.72, 0.58, 0.30), vec3(0.88, 0.76, 0.44), vnoise(s * 3.0));
       return c * (0.7 + 0.3 * line);
     }
     // دره: صخره‌ی تیره‌ی لبه (عمق در بیرون اعمال می‌شود)
+    if (hasTex[8] > 0.5) return texture2D(tChasm, s * texScale).rgb;
     float big = fbm3(s * 0.6);
     vec3 c = mix(vec3(0.22, 0.18, 0.16), vec3(0.36, 0.30, 0.26), big);
     float crack = abs(vnoise(s * 2.4) - 0.5);
@@ -148,9 +165,13 @@ export function makeGroundTexture(size: number, idAt: (i: number, j: number) => 
   return t;
 }
 
-export function makeGroundMaterial(tex: DataTexture, originX: number, originZ: number, size: number, seed: number): ShaderMaterial {
+export function makeGroundMaterial(tex: DataTexture, originX: number, originZ: number, size: number, seed: number, textures: GroundTextures = {}): ShaderMaterial {
+  const names = ['tGrass', 'tDry', 'tRock', 'tMarsh', 'tCracked', 'tLava', 'tStone', 'tGold', 'tChasm'];
+  const texUniforms: Record<string, { value: any }> = {};
+  const hasTex: number[] = [];
+  TEX_KEYS.forEach((k, i) => { const t = textures[k]; texUniforms[names[i]] = { value: t ?? blank }; hasTex.push(t ? 1 : 0); });
   return new ShaderMaterial({
-    uniforms: { tTerrain: { value: tex }, origin: { value: new Vector2(originX, originZ) }, texSize: { value: size }, seed: { value: (seed % 1000) * 0.37 } },
+    uniforms: { tTerrain: { value: tex }, origin: { value: new Vector2(originX, originZ) }, texSize: { value: size }, seed: { value: (seed % 1000) * 0.37 }, ...texUniforms, hasTex: { value: hasTex }, texScale: { value: 0.25 } },
     vertexShader: vertex, fragmentShader: fragment,
   });
 }
