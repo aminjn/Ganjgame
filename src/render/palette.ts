@@ -26,6 +26,7 @@ export const MARSH_LEAF_TINT = new Color('#8fa06a');
 
 export const PLAYER_COLOR = new Color('#ffd54a');
 export const CLAN_COLOR = new Color('#4fd6ff');
+export const OTHER_COLOR = new Color('#ff7a5c'); // خانه‌ها و کاروان بازیکنان دیگر
 export const SELECT_COLOR = new Color('#ffffff');
 export const TOMB_GLOW = new Color('#b06cff');
 export const TREASURE_GLOW = new Color('#ffcf3a');

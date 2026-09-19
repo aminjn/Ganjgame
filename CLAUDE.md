@@ -18,8 +18,11 @@
 - `src/rules/` منطق خالص و قابل تست (vitest) — بدون وابستگی به DOM/Three.
 - `src/render/` رندر Three.js.
 - `src/ui/` رابط فارسی راست‌به‌چپ.
+- `src/net/` کلاینت شبکه (REST + وب‌سوکت). کلاینت هیچ منطق بازی اجرا نمی‌کند؛ فقط نمایش می‌دهد و کنش‌ها را به سرور می‌فرستد.
+- `server/` سرور چندنفره‌ی مرجع (Fastify + SQLite داخلی Node 22): `src/game/` (دنیا، کنش‌ها، تیک)، `src/api/` (مسیرها، ادمین، وب‌سوکت)، `test/` (vitest). قوانین را از همان `src/rules/` می‌خواند.
+- `deploy/` نصب روی سرور خالی اوبونتو (install.sh، systemd، nginx، certbot، پشتیبان) — راهنما در `deploy/README.md`.
 - `admin.html` پنل ادمین (هیچ لینکی از بازی به آن نیست)، `faq.html` سوالات پرتکرار.
 - `public/assets/models/` مدل‌های Quaternius (CC0). با `npm run assets` از پوشه‌ی منبع ساخته می‌شوند.
 
 ## دستورها
-`npm run dev` · `npm run build` · `npm test` · `npm run assets`
+`npm run dev` · `npm run build` · `npm test` · `npm run assets` · سرور: `cd server && npm run dev|build|start|test`

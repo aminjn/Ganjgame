@@ -4,7 +4,7 @@ import {
   BufferGeometry, Float32BufferAttribute, DoubleSide, Color, OctahedronGeometry, PlaneGeometry, SRGBColorSpace, TorusGeometry, Object3D, MeshPhongMaterial,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { PLAYER_COLOR, CLAN_COLOR, TOMB_GLOW, TREASURE_GLOW, SELECT_COLOR } from './palette';
+import { PLAYER_COLOR, CLAN_COLOR, OTHER_COLOR, TOMB_GLOW, TREASURE_GLOW, SELECT_COLOR } from './palette';
 
 // پراپ‌های CC0 (Kenney Nature Kit، KayKit Dungeon) — با fallback به هندسه‌ی ساده اگر بارگذاری نشد
 const PROPS = new Map<string, Object3D>();
@@ -277,11 +277,11 @@ export function makeLabel(text: string, bg = '#1c1710', fg = '#ffe9a8'): Sprite 
 }
 
 // لایه‌ی خانه‌های خودی: چهارضلعی‌های نیمه‌شفاف که روی زمین می‌نشینند
-export function buildOwnedOverlay(tiles: { x: number; y: number; clan: boolean }[], height: (x: number, z: number) => number): Mesh {
+export function buildOwnedOverlay(tiles: { x: number; y: number; clan: boolean; other?: boolean }[], height: (x: number, z: number) => number): Mesh {
   const pos: number[] = [], col: number[] = [];
   const n = 3, step = 1 / n;
   for (const t of tiles) {
-    const c = t.clan ? CLAN_COLOR : PLAYER_COLOR;
+    const c = t.other ? OTHER_COLOR : t.clan ? CLAN_COLOR : PLAYER_COLOR;
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
       const x0 = t.x + i * step, z0 = t.y + j * step, x1 = x0 + step, z1 = z0 + step;
       const q = [[x0, z0], [x0, z1], [x1, z0], [x1, z0], [x0, z1], [x1, z1]];

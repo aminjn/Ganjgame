@@ -1,0 +1,9 @@
+[Unit]
+Description=Ganjgame — پشتیبان شبانه‌ی پایگاه‌داده
+
+[Service]
+Type=oneshot
+User=__APP_USER__
+WorkingDirectory=__APP_DIR__/server
+EnvironmentFile=__APP_DIR__/server/.env
+ExecStart=/bin/bash __APP_DIR__/deploy/backup.sh __APP_DIR__

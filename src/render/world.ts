@@ -16,7 +16,7 @@ import { SpriteLib, TileGround } from './sprites';
 import { Monsters } from './monsters';
 import type { UnitType } from '../rules/constants';
 import { makeComposer } from './post';
-import { PLAYER_COLOR, CLAN_COLOR } from './palette';
+import { PLAYER_COLOR, CLAN_COLOR, OTHER_COLOR } from './palette';
 
 export interface P { x: number; y: number }
 export interface Markers {
@@ -27,7 +27,9 @@ export interface Markers {
   caravan: { from: P; to: P; progress: number; clan: boolean } | null;
   caravanIdle: { at: P; clan: boolean } | null;
   tombs: P[];
-  owned: { x: number; y: number; clan: boolean }[];
+  owned: { x: number; y: number; clan: boolean; other?: boolean }[];
+  others: { at: P; name: string; clan: boolean }[]; // کاروان بازیکنان دیگر در دید
+  camps: { at: P; clan: boolean }[]; // کمپ بازیکنان/کلن‌های دیگر در دید
   treasure: P;
   path: P[] | null;
   participation: P | null;
@@ -66,6 +68,8 @@ export class World {
   private campObj: Group | null = null;
   private clanCampObj: Group | null = null;
   private caravanObj: Group | null = null;
+  private otherObjs = new Map<string, Group>();
+  private campObjs = new Map<string, Group>();
   private tombObjs: Group[] = [];
   private treasureObj: Group | null = null;
   private participationObj: Group | null = null;
@@ -237,6 +241,31 @@ export class World {
       this.lastHeading = heading;
       this.units.setCaravan(x, h + 0.02, z, heading, m.caravanUnits, !!m.caravan, true);
     } else { if (this.caravanObj) { this.markerGroup.remove(this.caravanObj); this.caravanObj = null; } this.units.setCaravan(0, 0, 0, 0, m.caravanUnits, false, false); }
+    // کاروان بازیکنان دیگر (فقط داخل دید)
+    const keep = new Set<string>();
+    for (const o of m.others) {
+      if (o.at.x < view.minX - 2 || o.at.x > view.maxX + 2 || o.at.y < view.minZ - 2 || o.at.y > view.maxZ + 2) continue;
+      const key = o.name; keep.add(key);
+      let g = this.otherObjs.get(key);
+      if (!g) {
+        g = this.sprites.make('buildings.caravan') ?? makeCaravan(OTHER_COLOR);
+        const ring = new Mesh(new TorusGeometry(1.0, 0.035, 6, 40), new MeshBasicMaterial({ color: o.clan ? CLAN_COLOR : OTHER_COLOR })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.03; g.add(ring);
+        const lbl = makeLabel(o.name.slice(0, 6), '#2a1410', '#ffd7c9'); lbl.position.y = 1.3; lbl.scale.setScalar(0.9); g.add(lbl);
+        this.otherObjs.set(key, g); this.markerGroup.add(g);
+      }
+      place(g, o.at, 0.02);
+    }
+    for (const [k, g] of this.otherObjs) if (!keep.has(k)) { this.markerGroup.remove(g); disposeObject(g); this.otherObjs.delete(k); }
+    // کمپ دیگران
+    const keepC = new Set<string>();
+    for (const c of m.camps) {
+      if (c.at.x < view.minX - 2 || c.at.x > view.maxX + 2 || c.at.y < view.minZ - 2 || c.at.y > view.maxZ + 2) continue;
+      const key = `${c.at.x},${c.at.y}`; keepC.add(key);
+      let g = this.campObjs.get(key);
+      if (!g) { g = build(c.clan ? 'clan_camp' : 'camp', () => makeCamp(c.clan ? CLAN_COLOR : OTHER_COLOR, c.clan)); this.campObjs.set(key, g); this.markerGroup.add(g); }
+      place(g, c.at);
+    }
+    for (const [k, g] of this.campObjs) if (!keepC.has(k)) { this.markerGroup.remove(g); disposeObject(g); this.campObjs.delete(k); }
     // نگاهبان‌ها روی خانه‌های تصاحب‌شده‌ی داخل دید
     const gv = m.guardians.filter(g => g.x >= view.minX - 2 && g.x <= view.maxX + 2 && g.y >= view.minZ - 2 && g.y <= view.maxZ + 2);
     const gl = gv.map(g => { const gx = g.x + 0.5 + Math.sin(g.x * 12.9 + g.y * 3.1) * 0.22, gz = g.y + 0.5 + Math.cos(g.x * 5.3 + g.y * 7.7) * 0.22; return { x: gx, y: this.heightAt(gx, gz), z: gz, type: g.type, rot: (g.x * 7 + g.y * 13) % 6.28 }; });
@@ -248,7 +277,7 @@ export class World {
     if (vis.length) { this.ownedMesh = buildOwnedOverlay(vis, (x, z) => this.heightAt(x, z)); this.markerGroup.add(this.ownedMesh); }
     // برجک و پرچم روی خانه‌های تصاحب‌شده‌ی داخل دید
     const campKeys = new Set([m.camp ? `${m.camp.x},${m.camp.y}` : '', m.clanCamp ? `${m.clanCamp.x},${m.clanCamp.y}` : '']);
-    this.territory.set(vis.map(o => ({ x: o.x, y: o.y, clan: o.clan, camp: campKeys.has(`${o.x},${o.y}`) })), (x, z) => this.heightAt(x, z), this.sprites, this.camera.quaternion);
+    this.territory.set(vis.map(o => ({ x: o.x, y: o.y, clan: o.clan, other: o.other, camp: campKeys.has(`${o.x},${o.y}`) })), (x, z) => this.heightAt(x, z), this.sprites, this.camera.quaternion);
 
     // مسیر با شماره‌ی قدم و نشان مقصد
     for (const c of [...this.pathGroup.children]) { this.pathGroup.remove(c); if ((c as Sprite).isSprite) (c as Sprite).material.dispose(); else disposeObject(c); }

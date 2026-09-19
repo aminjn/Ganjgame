@@ -3,7 +3,7 @@ import {
   Group, InstancedMesh, MeshPhongMaterial, MeshBasicMaterial, CylinderGeometry, ConeGeometry, BoxGeometry, PlaneGeometry, Object3D, Color, DoubleSide, BufferGeometry,
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { PLAYER_COLOR, CLAN_COLOR } from './palette';
+import { PLAYER_COLOR, CLAN_COLOR, OTHER_COLOR } from './palette';
 import { hash2 } from '../rules/rng';
 import type { SpriteLib } from './sprites';
 import { Quaternion } from 'three';
@@ -42,7 +42,7 @@ export class Territory {
     this.clothM.castShadow = true;
   }
 
-  set(list: { x: number; y: number; clan: boolean; camp: boolean }[], height: (x: number, z: number) => number, sprites?: SpriteLib, camQuat?: Quaternion) {
+  set(list: { x: number; y: number; clan: boolean; camp: boolean; other?: boolean }[], height: (x: number, z: number) => number, sprites?: SpriteLib, camQuat?: Quaternion) {
     // اگر اسپرایت برجک هست، بیلبورد Instanced به‌جای مدل
     if (sprites && sprites.ready && !this.spriteTried && camQuat) {
       this.spriteTried = true;
@@ -67,7 +67,7 @@ export class Territory {
     let n = 0;
     for (const t of list) {
       if (t.camp || n >= CAP) continue; // کمپ خودش ساختمان دارد
-      const col = t.clan ? CLAN_COLOR : PLAYER_COLOR;
+      const col = t.other ? OTHER_COLOR : t.clan ? CLAN_COLOR : PLAYER_COLOR;
       const r1 = hash2(t.x, t.y, 901), r2 = hash2(t.x, t.y, 902);
       // برجک در یک گوشه، پرچم در گوشه‌ی مقابل — جای نگهبان (نزدیک مرکز) خالی می‌ماند
       // برجک در گوشه‌ی خانه، پرچم روی نوک همان برجک — جای نگهبان خالی می‌ماند
