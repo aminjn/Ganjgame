@@ -11,14 +11,14 @@ export const GROUND: Record<Terrain, Color> = {
   hell:     new Color('#7a3328'),
   tomb:     new Color('#8a6f96'),
   treasure: new Color('#d9b45a'),
-  valley:   new Color('#3e3836'),
+  valley:   new Color('#4a423f'),
 };
 export const GRASS_DARK = new Color('#7fbf3a');   // لکه‌های چمن تیره‌تر (الگوی کاشیِ نرم)
 export const MARSH_FLOOR = new Color('#4f6b30');
 export const SAND = new Color('#e9d68f');
 export const DIRT = new Color('#d5b371');
 export const SNOW = new Color('#f2f0ea');
-export const WATER = new Color('#4d7a3e');
+export const WATER = new Color('#33552e');
 export const ROCK_TINT = new Color('#c4bcb1');
 export const HELL_ROCK_TINT = new Color('#7a5f5a');
 export const DANGER_LEAF_TINT = new Color('#c48a5a');

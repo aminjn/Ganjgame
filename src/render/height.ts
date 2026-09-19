@@ -34,7 +34,7 @@ export function makeHeight(terrain: TerrainFn, seed: number, flat = false) {
       const o = bilinear(wx, wz, (x, y) => { const t = T(x, y); return t === 'marsh' ? -0.12 : t === 'valley' ? -0.05 : 0; });
       // مرداب: کف لجنی تقریباً هم‌سطح با گودی‌های کوچک پراکنده (برکه‌های ریز)، نه دریاچه
       const marshW = bilinear(wx, wz, (x, y) => (T(x, y) === 'marsh' ? 1 : 0));
-      const pool = Math.max(0, valueNoise(wx / 2.2, wz / 2.2, seed + 61) - 0.58) * 1.6;
+      const pool = Math.max(0, valueNoise(wx / 1.6, wz / 1.6, seed + 61) - 0.64) * 1.8;
       return o + marshW * (0.06 - pool * 0.5);
     }
     const off = bilinear(wx, wz, (x, y) => OFFSET[T(x, y)]);

@@ -9,7 +9,7 @@ const SUB = 6;
 
 export class TerrainChunks {
   material = new MeshPhongMaterial({ vertexColors: true, shininess: 6, specular: new Color('#1a1a1a') });
-  waterMaterial = new MeshPhongMaterial({ color: WATER, transparent: true, opacity: 0.8, shininess: 30, specular: new Color('#bcd48a'), depthWrite: false });
+  waterMaterial = new MeshPhongMaterial({ color: WATER, transparent: true, opacity: 0.85, shininess: 8, specular: new Color('#3a4a2a'), depthWrite: false });
   chunks = new Map<string, Group>();
   constructor(private H: ReturnType<typeof makeHeight>, private seed: number) {}
 
