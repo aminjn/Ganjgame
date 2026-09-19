@@ -3,6 +3,7 @@
 set -euo pipefail
 APP_DIR="${APP_DIR:-/opt/ganjgame}"
 cd "$APP_DIR"
+git config --global --add safe.directory "$APP_DIR" >/dev/null 2>&1 || true
 if [ -d .git ]; then git pull --ff-only; fi
 npm ci --no-audit --no-fund && npm run build
 ( cd server && npm ci --no-audit --no-fund && npm run build )

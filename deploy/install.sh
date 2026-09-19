@@ -80,6 +80,7 @@ log "نصب وابستگی‌ها و ساخت کلاینت + سرور"
 npm ci --no-audit --no-fund
 npm run build
 ( cd server && npm ci --no-audit --no-fund && npm run build )
+git config --global --add safe.directory "$APP_DIR" >/dev/null 2>&1 || true
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 chmod 600 "$APP_DIR/server/.env"
 
