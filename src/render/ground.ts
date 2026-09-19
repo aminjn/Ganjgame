@@ -58,57 +58,70 @@ const fragment = /* glsl */`
       c = mix(c, dark * 0.85, clump * 0.35);
       return c;
     }
-    if (id < 2.5) { // کوهستان: سنگ با ترک و سنگریزه
+    if (id < 2.5) { // کوهستان: صخره‌ی سرد آبی-خاکستری با برف و ترک (مرجع ۷)
       if (hasTex[2] > 0.5) return texture2D(tRock, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
       float big = fbm3(s * 0.4);
       float mid = fbm3(s * 1.3 + 15.0);
-      vec3 c = mix(vec3(0.40, 0.38, 0.34), vec3(0.64, 0.61, 0.54), big * 0.6 + mid * 0.4);
+      vec3 c = mix(vec3(0.20, 0.23, 0.29), vec3(0.50, 0.54, 0.60), big * 0.6 + mid * 0.4);
       float crack = abs(vnoise(s * 2.1 + 2.0) - 0.5) + 0.35 * abs(vnoise(s * 4.7 + 5.0) - 0.5);
-      c *= 0.82 + 0.22 * smoothstep(0.02, 0.16, crack);
+      c *= 0.78 + 0.26 * smoothstep(0.02, 0.16, crack);
       c *= 0.9 + 0.2 * vnoise(s * 11.0);
-      float pebble = smoothstep(0.78, 0.92, vnoise(s * 6.0 + 21.0));
-      c = mix(c, vec3(0.74, 0.71, 0.64), pebble * 0.6);
-      float moss = smoothstep(0.7, 0.85, fbm2(s * 0.5 + 40.0));
-      return mix(c, vec3(0.40, 0.50, 0.28), moss * 0.45);
+      float snow = smoothstep(0.62, 0.8, fbm2(s * 0.35 + 40.0)) * smoothstep(0.3, 0.7, vnoise(s * 3.0 + 9.0));
+      c = mix(c, vec3(0.78, 0.84, 0.92), snow * 0.8);
+      float mist = smoothstep(0.7, 0.95, fbm2(s * 0.12 + 77.0));
+      return mix(c, vec3(0.55, 0.62, 0.72), mist * 0.35);
     }
-    if (id < 3.5) { // مرداب: گل تیره، لجن، برکه
+    if (id < 3.5) { // مرداب: گل تیره‌ی آبی-بنفش، برکه‌های فیروزه‌ای، گیاه گلگون (مرجع ۸)
       if (hasTex[3] > 0.5) return texture2D(tMarsh, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
       float big = fbm3(s * 0.5);
-      vec3 c = mix(vec3(0.22, 0.27, 0.14), vec3(0.36, 0.42, 0.20), big);
+      vec3 c = mix(vec3(0.10, 0.12, 0.19), vec3(0.22, 0.25, 0.32), big);
       float pool = fbm2(s * 0.55 + 23.0);
-      c = mix(c, vec3(0.16, 0.26, 0.24), smoothstep(0.58, 0.68, pool));
-      float slime = vnoise(s * 1.6 + 8.0);
-      c = mix(c, vec3(0.44, 0.56, 0.22), smoothstep(0.7, 0.85, slime) * 0.7);
+      float pm = smoothstep(0.58, 0.68, pool);
+      c = mix(c, vec3(0.09, 0.26, 0.28) * (0.8 + 0.4 * vnoise(s * 4.0)), pm);
+      float glow = smoothstep(0.8, 0.93, vnoise(s * 3.2 + 8.0)) * smoothstep(0.5, 0.75, fbm2(s * 0.4 + 12.0)) * (1.0 - pm);
+      c = mix(c, vec3(0.55, 0.20, 0.30), glow * 0.55);
+      float moss = smoothstep(0.66, 0.8, fbm2(s * 0.8 + 50.0)) * (1.0 - pm);
+      c = mix(c, vec3(0.24, 0.36, 0.22), moss * 0.6);
       c *= 0.9 + 0.2 * vnoise(s * 8.0);
       return c;
     }
-    if (id < 4.5) { // سرزمین خطر: خاک خشک ترک‌خورده
+    if (id < 4.5) { // سرزمین خطر: زمین خاکستری-آبی ترک‌خورده با رگه‌های سرخ گداخته (مرجع ۱۰)
       if (hasTex[4] > 0.5) return texture2D(tCracked, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
       float big = fbm3(s * 0.4);
-      vec3 c = mix(vec3(0.48, 0.28, 0.20), vec3(0.70, 0.46, 0.30), big);
+      vec3 c = mix(vec3(0.17, 0.18, 0.23), vec3(0.40, 0.41, 0.46), big);
       float crack = abs(vnoise(s * 1.9 + 3.0) - 0.5) + 0.3 * abs(vnoise(s * 4.1 + 6.0) - 0.5);
       c *= 0.7 + 0.4 * smoothstep(0.012, 0.11, crack);
-      float ash = smoothstep(0.68, 0.82, fbm2(s * 0.2 + 51.0));
-      c = mix(c, vec3(0.35, 0.30, 0.28), ash);
+      float vein = smoothstep(0.022, 0.0, abs(vnoise(s * 1.1 + 11.0) - 0.5)) * smoothstep(0.45, 0.7, fbm2(s * 0.3 + 4.0));
+      c = mix(c, vec3(1.0, 0.16, 0.08), vein * 0.9);
+      float ember = smoothstep(0.88, 0.97, vnoise(s * 6.0 + 27.0)) * smoothstep(0.5, 0.75, fbm2(s * 0.35 + 9.0));
+      c += vec3(0.9, 0.2, 0.08) * ember * 0.6;
+      float ash = smoothstep(0.7, 0.85, fbm2(s * 0.2 + 51.0));
+      c = mix(c, vec3(0.30, 0.28, 0.30), ash * 0.7);
       c *= 0.9 + 0.2 * vnoise(s * 9.0);
       return c;
     }
-    if (id < 5.5) { // جهنمی: زمین سوخته با رگه‌ی گداخته
+    if (id < 5.5) { // جهنمی: سنگ سیاه با رودهای گدازه و شعله‌ی بنفش (مرجع ۹)
       if (hasTex[5] > 0.5) return texture2D(tLava, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
       float big = fbm3(s * 0.5);
-      vec3 c = mix(vec3(0.16, 0.10, 0.09), vec3(0.32, 0.17, 0.14), big);
-      float vein = smoothstep(0.02, 0.0, abs(vnoise(s * 1.6 + 11.0) - 0.5)) * smoothstep(0.55, 0.8, fbm2(s * 0.5 + 4.0));
-      c += vec3(1.0, 0.42, 0.12) * vein * 0.55;
-      float ember = smoothstep(0.86, 0.97, vnoise(s * 5.0 + 27.0)) * smoothstep(0.5, 0.75, fbm2(s * 0.4 + 9.0));
+      vec3 c = mix(vec3(0.05, 0.04, 0.06), vec3(0.20, 0.14, 0.16), big);
+      float river = smoothstep(0.05, 0.0, abs(vnoise(s * 0.9 + 11.0) - 0.5)) * smoothstep(0.4, 0.7, fbm2(s * 0.4 + 4.0));
+      float vein = smoothstep(0.02, 0.0, abs(vnoise(s * 2.4 + 13.0) - 0.5)) * smoothstep(0.5, 0.75, fbm2(s * 0.5 + 6.0));
+      float lava = max(river, vein * 0.8);
+      c = mix(c, vec3(1.0, 0.45, 0.10), lava);
+      c += vec3(1.0, 0.3, 0.05) * river * 0.4;
+      float purple = smoothstep(0.84, 0.96, fbm2(s * 0.3 + 31.0)) * (1.0 - lava);
+      c = mix(c, vec3(0.40, 0.14, 0.62), purple * 0.5);
+      float ember = smoothstep(0.9, 0.98, vnoise(s * 7.0 + 27.0));
       c += vec3(1.0, 0.35, 0.08) * ember * 0.5;
-      c *= 0.9 + 0.2 * vnoise(s * 9.0);
       return c;
     }
-    if (id < 6.5) { // مقبره: سنگفرش بنفش-خاکستری
+    if (id < 6.5) { // مقبره: سنگفرش تیره‌ی ویرانه با رون‌های فیروزه‌ای (مرجع ۶)
       if (hasTex[6] > 0.5) return texture2D(tStone, s * texScale).rgb;
       vec2 g = fract(q * 2.0); float line = smoothstep(0.0, 0.07, min(min(g.x, 1.0 - g.x), min(g.y, 1.0 - g.y)));
-      vec3 c = mix(vec3(0.42, 0.34, 0.46), vec3(0.58, 0.50, 0.62), vnoise(s * 3.0));
-      return c * (0.7 + 0.3 * line);
+      vec3 c = mix(vec3(0.18, 0.19, 0.23), vec3(0.34, 0.35, 0.40), vnoise(s * 3.0));
+      float rune = smoothstep(0.03, 0.0, abs(vnoise(s * 3.5 + 5.0) - 0.5)) * smoothstep(0.5, 0.7, vnoise(s * 0.8));
+      c = mix(c * (0.7 + 0.3 * line), vec3(0.2, 0.9, 0.8), rune * 0.8);
+      return c;
     }
     if (id < 7.5) { // خانه‌ی گنج: سنگفرش طلایی
       if (hasTex[7] > 0.5) return texture2D(tGold, s * texScale).rgb;
@@ -144,10 +157,15 @@ const fragment = /* glsl */`
     }
     col /= max(wsum, 0.001);
     // دره: هرچه به مرکز خانه‌های دره نزدیک‌تر، تاریک‌تر (پرتگاه)
-    col = mix(col, vec3(0.06, 0.045, 0.04), smoothstep(0.45, 1.0, valley));
-    col *= 1.0 - 0.35 * smoothstep(0.05, 0.45, valley) * (1.0 - smoothstep(0.45, 1.0, valley));
+    col = mix(col, vec3(0.05, 0.04, 0.04), smoothstep(0.3, 0.75, valley));
+    col *= 1.0 + 0.35 * smoothstep(0.08, 0.3, valley) * (1.0 - smoothstep(0.3, 0.5, valley)); // لبه‌ی روشن پرتگاه
     // نور آسمانی ملایم و لکه‌های ابر خیلی کم‌بسامد
     col *= 0.93 + 0.14 * fbm2(p * 0.05 + 3.0);
+    // جوّ حلقه‌ای (مرجع ۳): بیرون روشن و روزانه، به سمت مرکز تاریک و سرد با ته‌رنگ سرخ گداخته
+    float dc = length(p - vec2(500.0));
+    float dark = smoothstep(420.0, 150.0, dc);
+    col *= 1.0 - 0.38 * dark;
+    col = mix(col, col * vec3(1.08, 0.9, 0.85), dark * 0.6);
     // شبکه‌ی کاشی خیلی محو (سبک تراوین)
     vec2 g = fract(p); float edge = min(min(g.x, 1.0 - g.x), min(g.y, 1.0 - g.y));
     float line = (1.0 - smoothstep(0.0, 0.05, edge)) * 0.07;
