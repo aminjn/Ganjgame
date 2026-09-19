@@ -220,7 +220,8 @@ export class Scenery {
             const key = keys[Math.floor(hash2(x, y, seed + salt + 1) * keys.length)];
             const wx0 = x + ox0, wz0 = y + oz0; const h0 = height(wx0, wz0);
             if (sp.group === 'lily' && h0 > water(wx0, wz0) - 0.05) continue;
-            const sc0 = 0.8 + hash2(x, y, seed + salt + 5) * 0.4;
+            const bigger = /tree|pine|dead|rock/i.test(sp.group) ? 1.25 : 1.0;
+            const sc0 = (0.85 + hash2(x, y, seed + salt + 5) * 0.4) * bigger;
             this.placeSprite(key, wx0, wz0, sp.group === 'lily' ? water(wx0, wz0) : h0, sc0, camQuat!);
             continue;
           }

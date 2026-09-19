@@ -29,7 +29,7 @@ const OutlineShader = {
 };
 
 const GradeShader = {
-  uniforms: { tDiffuse: { value: null }, vignette: { value: 0.16 }, warmth: { value: 0.03 }, saturation: { value: 1.18 } },
+  uniforms: { tDiffuse: { value: null }, vignette: { value: 0.22 }, warmth: { value: 0.05 }, saturation: { value: 1.04 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: `
     uniform sampler2D tDiffuse; uniform float vignette; uniform float warmth; uniform float saturation; varying vec2 vUv;

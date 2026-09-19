@@ -3,6 +3,7 @@ import { BufferGeometry, Float32BufferAttribute, Mesh, MeshPhongMaterial, Color,
 import type { makeHeight } from './height';
 import { hash2 } from '../rules/rng';
 import { WATER } from './palette';
+import { makeGroundMaterial, makeGroundTexture, TERRAIN_ID } from './ground';
 
 export const CHUNK = 16;
 const SUB = 6;
@@ -45,12 +46,15 @@ export class TerrainChunks {
     g.setIndex(idx);
     g.computeVertexNormals();
     g.computeBoundingSphere();
-    const m = new Mesh(g, this.material);
+    // زمین نقاشی‌گونه‌ی GPU در حالت کاشی؛ رنگ رأس فقط پشتیبان مدل سه‌بعدی
+    let mat: any = this.material;
+    if (this.H.flat) { const size = CHUNK + 2; const tex = makeGroundTexture(size, (i, j) => TERRAIN_ID[this.H.T(x0 - 1 + i, z0 - 1 + j)]); mat = makeGroundMaterial(tex, x0 - 1, z0 - 1, size, this.seed); }
+    const m = new Mesh(g, mat);
     m.receiveShadow = true;
     m.userData.chunk = true;
     const grp = new Group();
     grp.add(m);
-    if (widx.length) {
+    if (widx.length && !this.H.flat) {
       const wg = new BufferGeometry();
       wg.setAttribute('position', new Float32BufferAttribute(wpos, 3));
       wg.setIndex(widx);
@@ -75,6 +79,6 @@ export class TerrainChunks {
     return changed;
   }
 
-  private dispose(g: Group) { g.traverse((o: any) => { if (o.geometry) o.geometry.dispose(); }); }
+  private dispose(g: Group) { g.traverse((o: any) => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== this.material && o.material !== this.waterMaterial) { o.material.uniforms?.tTerrain?.value?.dispose(); o.material.dispose(); } }); }
   clear(remove: (m: Group) => void) { for (const m of this.chunks.values()) { remove(m); this.dispose(m); } this.chunks.clear(); }
 }

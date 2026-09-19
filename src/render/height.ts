@@ -92,5 +92,5 @@ export function makeHeight(terrain: TerrainFn, seed: number, flat = false) {
     out.multiplyScalar((1 - ao - under) * (1 + speck + checker - line));
     return out;
   };
-  return { height, water, roll, color, T };
+  return { height, water, roll, color, T, flat };
 }
