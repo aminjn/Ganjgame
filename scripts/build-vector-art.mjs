@@ -12,7 +12,7 @@ const manifest = { units: {}, monsters: {}, buildings: {}, scenery: {}, artifact
 const png = (svgText, file) => sharp(Buffer.from(svgText)).png().toFile(file);
 const H = { units: { idle: 1.15, walk: 1.15 }, monsters: { plain: 1.1, mountain: 1.4, marsh: 1.15, danger: 1.3, hell: 1.45, tomb: 1.35, treasure: 1.7 },
   buildings: { camp: 2.9, clan_camp: 2.9, tomb: 2.6, treasure: 2.7, caravan: 1.4, tower: 0.95, tower_clan: 0.95 },
-  scenery: { tree: 1.2, tree2: 1.25, dead_tree: 1.1, bush: 0.6, rock: 0.55, big_rock: 0.95, grass: 0.4, flower: 0.5, mushroom: 0.45, bones: 0.35, ruin: 0.95, sign: 0.65, pond: 0.75, fire: 0.6, crystal: 0.85, statue: 1.05 } };
+  scenery: { tree: 1.2, tree2: 1.25, dead_tree: 1.1, bush: 0.6, rock: 0.55, big_rock: 0.95, grass: 0.4, flower: 0.5, mushroom: 0.45, bones: 0.35, ruin: 0.95, sign: 0.65, pond: 0.75, fire: 0.6, crystal: 0.85, statue: 1.05, reeds: 0.55, fog: 0.35 } };
 
 // نیروها: idle + شیت ۴ فریمی راه‌رفتن
 for (const t of UNIT_TYPES) {

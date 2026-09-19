@@ -226,6 +226,16 @@
    "w": 0.74,
    "h": 0.85
   },
+  "reeds": {
+   "file": "scenery/reeds.png",
+   "w": 0.55,
+   "h": 0.55
+  },
+  "fog": {
+   "file": "scenery/fog.png",
+   "w": 0.88,
+   "h": 0.35
+  },
   "statue": {
    "file": "scenery/statue.png",
    "w": 0.73,
@@ -345,6 +355,5 @@
    "w": 1,
    "h": 1
   }
- },
- "markers": {}
+ }
 }

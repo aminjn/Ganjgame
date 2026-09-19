@@ -60,7 +60,7 @@ const SPAWNS: Record<Terrain, Spawn[]> = {
   safe:     [{ group: 'tree', chance: 0.05, scale: [0.85, 1.2] }, { group: 'grass', chance: 0.05, scale: [0.8, 1.2] }, { group: 'flower', chance: 0.04, scale: [0.9, 1.2] }, { group: 'pebble', chance: 0.03, scale: [0.8, 1.4] }, { group: 'bush', chance: 0.02, scale: [0.8, 1.1] }],
   plain:    [{ group: 'tree', chance: 0.04, scale: [0.9, 1.25] }, { group: 'bush', chance: 0.03, scale: [0.8, 1.2] }, { group: 'grass', chance: 0.06, scale: [0.8, 1.2] }, { group: 'flower', chance: 0.05, scale: [0.9, 1.2] }, { group: 'pebble', chance: 0.02, scale: [0.8, 1.4] }],
   mountain: [{ group: 'pine', chance: 0.16, scale: [0.8, 1.3] }, { group: 'pineSmall', chance: 0.08, scale: [0.8, 1.3] }, { group: 'rockBig', chance: 0.07, scale: [0.7, 1.4] }, { group: 'rock', chance: 0.10, scale: [0.7, 1.4] }, { group: 'pebble', chance: 0.08, scale: [0.9, 1.6] }],
-  marsh:    [{ group: 'darkTree', chance: 0.10, scale: [0.8, 1.2], leafTint: new Color('#8ea86a') }, { group: 'dead', chance: 0.08, scale: [0.9, 1.3] }, { group: 'marshPlant', chance: 0.10, scale: [0.9, 1.5] }, { group: 'lily', chance: 0.16, scale: [0.7, 1.2] }, { group: 'grass', chance: 0.06, scale: [0.9, 1.3] }],
+  marsh:    [{ group: 'darkTree', chance: 0.16, scale: [0.8, 1.2], leafTint: new Color('#8ea86a') }, { group: 'dead', chance: 0.10, scale: [0.9, 1.3] }, { group: 'marshPlant', chance: 0.22, scale: [0.9, 1.4] }, { group: 'lily', chance: 0.12, scale: [0.8, 1.2] }],
   danger:   [{ group: 'dead', chance: 0.12, scale: [0.9, 1.4], tint: new Color('#8c6a52'), leafTint: new Color('#9c6f4a') }, { group: 'darkTree', chance: 0.06, scale: [0.8, 1.2], leafTint: new Color('#a8764f') }, { group: 'rock', chance: 0.10, scale: [0.7, 1.4], tint: new Color('#9a7568') }, { group: 'rockBig', chance: 0.03, scale: [0.7, 1.2], tint: new Color('#9a7568') }, { group: 'marshPlant', chance: 0.02, scale: [0.9, 1.3] }],
   hell:     [{ group: 'rockBig', chance: 0.10, scale: [0.8, 1.6], tint: new Color('#6e5550') }, { group: 'rock', chance: 0.18, scale: [0.8, 1.6], tint: new Color('#6e5550') }, { group: 'dead', chance: 0.06, scale: [0.8, 1.2], tint: new Color('#5a4038') }],
   tomb:     [],
@@ -71,16 +71,17 @@ const SPAWNS: Record<Terrain, Spawn[]> = {
 // هر گروه صحنه‌آرایی → اسپرایت‌های شیت مرجع (اگر موجود باشند، به‌جای مدل سه‌بعدی)
 const GROUP_SPRITES: Record<string, string[]> = {
   tree: ['scenery.tree', 'scenery.tree', 'scenery.tree2', 'scenery.bush'], pine: ['scenery.tree2', 'scenery.tree2', 'scenery.big_rock'], pineSmall: ['scenery.bush', 'scenery.rock'],
-  darkTree: ['scenery.dead_tree', 'scenery.tree'], dead: ['scenery.dead_tree', 'scenery.bones', 'scenery.ruin'],
+  darkTree: ['scenery.dead_tree', 'scenery.dead_tree', 'scenery.tree'], dead: ['scenery.dead_tree', 'scenery.bones', 'scenery.ruin'],
   rockBig: ['scenery.big_rock', 'scenery.ruin', 'scenery.statue'], rock: ['scenery.rock', 'scenery.rock', 'scenery.big_rock'], pebble: ['scenery.rock'],
   bush: ['scenery.bush', 'scenery.flower'], grass: ['scenery.grass', 'scenery.grass', 'scenery.flower'], flower: ['scenery.flower'],
-  marshPlant: ['scenery.mushroom', 'scenery.grass'], lily: ['scenery.pond'],
+  marshPlant: ['scenery.mushroom', 'scenery.reeds', 'scenery.reeds'], lily: ['scenery.reeds'],
 };
 const TERRAIN_EXTRA: Partial<Record<Terrain, { key: string; chance: number }[]>> = {
   danger: [{ key: 'scenery.fire', chance: 0.012 }, { key: 'scenery.bones', chance: 0.01 }, { key: 'scenery.crystal', chance: 0.005 }],
   hell: [{ key: 'scenery.fire', chance: 0.03 }, { key: 'scenery.crystal', chance: 0.015 }],
   mountain: [{ key: 'scenery.crystal', chance: 0.012 }, { key: 'scenery.statue', chance: 0.005 }],
   safe: [{ key: 'scenery.sign', chance: 0.004 }],
+  marsh: [{ key: 'scenery.bones', chance: 0.02 }],
   plain: [{ key: 'scenery.pond', chance: 0.005 }, { key: 'scenery.ruin', chance: 0.003 }],
 };
 

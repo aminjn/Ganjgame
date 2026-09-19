@@ -5,16 +5,16 @@ import { hash2 } from '../rules/rng';
 import { WATER } from './palette';
 
 export const CHUNK = 16;
-const SUB = 2;
+const SUB = 6;
 
 export class TerrainChunks {
   material = new MeshPhongMaterial({ vertexColors: true, shininess: 6, specular: new Color('#1a1a1a') });
-  waterMaterial = new MeshPhongMaterial({ color: WATER, transparent: true, opacity: 0.86, shininess: 70, specular: new Color('#9fe9ff'), depthWrite: false });
+  waterMaterial = new MeshPhongMaterial({ color: WATER, transparent: true, opacity: 0.8, shininess: 30, specular: new Color('#bcd48a'), depthWrite: false });
   chunks = new Map<string, Group>();
   constructor(private H: ReturnType<typeof makeHeight>, private seed: number) {}
 
-  private jx(i: number, j: number) { return (hash2(i, j, this.seed + 51) - 0.5) * 0.12; }
-  private jz(i: number, j: number) { return (hash2(i, j, this.seed + 52) - 0.5) * 0.12; }
+  private jx(_i: number, _j: number) { return 0; }
+  private jz(_i: number, _j: number) { return 0; }
 
   build(cx: number, cz: number): Group {
     const n = CHUNK * SUB;
