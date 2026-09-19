@@ -169,7 +169,7 @@ export class World {
   }
 
   async init() {
-    await Promise.all([this.scenery.load(), this.units.load(), loadProps(), this.sprites.load(), loadGroundTextures().then(t => { this.groundTextures = t; })]);
+    await Promise.all([this.scenery.load(), this.units.load(), loadProps(), this.sprites.load(), loadGroundTextures().then(t => { this.groundTextures = t; this.scenery.painted = Object.keys(t).length > 0; })]);
     this.units.sprites = this.sprites; this.scenery.sprites = this.sprites;
     this.setTerrain(this.terrainFn, this.seed, this.skipFn, this.ownedFn);
     // نشانه‌ها با پراپ‌های واقعی از نو ساخته شوند

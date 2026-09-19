@@ -79,9 +79,9 @@ const TERRAIN_EXTRA: Partial<Record<Terrain, { key: string; chance: number }[]>>
   danger: [{ key: 'scenery.fire', chance: 0.012 }, { key: 'scenery.bones', chance: 0.01 }, { key: 'scenery.crystal', chance: 0.005 }],
   hell: [{ key: 'scenery.fire', chance: 0.03 }, { key: 'scenery.crystal', chance: 0.015 }],
   mountain: [{ key: 'scenery.crystal', chance: 0.012 }, { key: 'scenery.statue', chance: 0.005 }],
-  safe: [{ key: 'scenery.sign', chance: 0.004 }],
-  marsh: [{ key: 'scenery.bones', chance: 0.02 }],
-  plain: [{ key: 'scenery.pond', chance: 0.005 }, { key: 'scenery.ruin', chance: 0.003 }],
+  safe: [{ key: 'scenery.sign', chance: 0.002 }],
+  marsh: [{ key: 'scenery.bones', chance: 0.015 }, { key: 'scenery.marsh_set1', chance: 0.012 }],
+  plain: [{ key: 'scenery.pond', chance: 0.004 }, { key: 'scenery.ruin', chance: 0.003 }, { key: 'scenery.dry_set1', chance: 0.003 }, { key: 'scenery.dry_set2', chance: 0.003 }, { key: 'scenery.dry_set3', chance: 0.003 }, { key: 'scenery.dry_set4', chance: 0.003 }],
 };
 
 export class Scenery {
@@ -155,6 +155,7 @@ export class Scenery {
   }
 
   // سایه‌ی نرم زیر هر اسپرایت (بیضی تیره روی زمین) تا اشیا روی زمین «بنشینند»
+  painted = false; // زمین با بافت مرجع: صحنه‌آرایی وکتوری خاموش
   private shadowMesh: InstancedMesh | null = null;
   private shadowCount = 0;
   private shadow(): InstancedMesh {
@@ -182,7 +183,7 @@ export class Scenery {
     const n = this.spriteCounts.get(key) ?? 0; if (n >= this.capacity * 2) return true;
     this.tmpO.position.set(wx, h, wz); this.tmpO.quaternion.copy(camQuat); this.tmpO.scale.setScalar(sc); this.tmpO.updateMatrix();
     im.setMatrixAt(n, this.tmpO.matrix); im.count = n + 1; this.spriteCounts.set(key, n + 1);
-    const d = this.sprites!.def(key); if (d && !/grass|flower|fog|pond|reeds|lily/.test(key)) this.placeShadow(wx + 0.06 * sc, wz + 0.04 * sc, h, Math.min(0.55, d.w * 0.3 * sc), Math.min(0.32, d.w * 0.17 * sc));
+    const d = this.sprites!.def(key); if (d && !/grass|flower|fog|pond|reeds|lily|_set/.test(key)) this.placeShadow(wx + 0.06 * sc, wz + 0.04 * sc, h, Math.min(0.55, d.w * 0.3 * sc), Math.min(0.32, d.w * 0.17 * sc));
     return true;
   }
 
@@ -201,7 +202,7 @@ export class Scenery {
       if (skip(x, y)) continue;
       if (useSprites && TERRAIN_EXTRA[t]) {
         let es = 300;
-        for (const e of TERRAIN_EXTRA[t]!) { es += 7; if (hash2(x, y, seed + es) < e.chance) { const wx = x + 0.2 + hash2(x, y, seed + es + 1) * 0.6, wz = y + 0.2 + hash2(x, y, seed + es + 2) * 0.6; this.placeSprite(e.key, wx, wz, height(wx, wz), 0.8 + hash2(x, y, seed + es + 3) * 0.4, camQuat!); } }
+        for (const e of TERRAIN_EXTRA[t]!) { es += 7; if (this.painted && !/_set/.test(e.key)) continue; if (hash2(x, y, seed + es) < e.chance) { const wx = x + 0.2 + hash2(x, y, seed + es + 1) * 0.6, wz = y + 0.2 + hash2(x, y, seed + es + 2) * 0.6; this.placeSprite(e.key, wx, wz, height(wx, wz), 0.8 + hash2(x, y, seed + es + 3) * 0.4, camQuat!); } }
       }
       if (!spawns.length) continue;
       let salt = 0;
@@ -211,7 +212,7 @@ export class Scenery {
         const clustered = /tree|pine|dead/i.test(sp.group);
         const density = clustered ? Math.max(0, Math.min(2.2, (valueNoise(x / 9, y / 9, seed + 77) - 0.3) * 3.2)) : 1;
         // با اسپرایت: درخت و سنگ کمی کمتر از مدل سه‌بعدی، ولی علف و گل و بوته بیشتر تا زمین خالی نماند
-        const spriteFactor = /tree|pine|dead|rock|bush/i.test(sp.group) ? 0.5 : 1.4;
+        const spriteFactor = this.painted ? 0.0 : (/tree|pine|dead|rock|bush/i.test(sp.group) ? 0.5 : 1.4);
         if (hash2(x, y, seed + salt) >= sp.chance * density * (useSprites ? spriteFactor : 1)) continue;
         const ox0 = 0.12 + hash2(x, y, seed + salt + 2) * 0.76, oz0 = 0.12 + hash2(x, y, seed + salt + 3) * 0.76;
         if (useSprites && GROUP_SPRITES[sp.group]) {

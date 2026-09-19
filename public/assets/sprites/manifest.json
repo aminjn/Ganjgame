@@ -116,18 +116,18 @@
  "buildings": {
   "camp": {
    "file": "buildings/camp.png",
-   "w": 3.63,
-   "h": 2.9
+   "w": 4.79,
+   "h": 3.2
   },
   "clan_camp": {
    "file": "buildings/clan_camp.png",
-   "w": 3.63,
-   "h": 2.9
+   "w": 5.21,
+   "h": 3.6
   },
   "tomb": {
    "file": "buildings/tomb.png",
-   "w": 3.25,
-   "h": 2.6
+   "w": 3.43,
+   "h": 3.4
   },
   "treasure": {
    "file": "buildings/treasure.png",
@@ -240,6 +240,41 @@
    "file": "scenery/statue.png",
    "w": 0.73,
    "h": 1.05
+  },
+  "grass_set1": {
+   "file": "scenery/grass_set1.png",
+   "w": 4.83,
+   "h": 3
+  },
+  "grass_set2": {
+   "file": "scenery/grass_set2.png",
+   "w": 4.43,
+   "h": 3
+  },
+  "dry_set1": {
+   "file": "scenery/dry_set1.png",
+   "w": 4.4,
+   "h": 3
+  },
+  "dry_set2": {
+   "file": "scenery/dry_set2.png",
+   "w": 5.16,
+   "h": 3
+  },
+  "dry_set3": {
+   "file": "scenery/dry_set3.png",
+   "w": 5.14,
+   "h": 3
+  },
+  "dry_set4": {
+   "file": "scenery/dry_set4.png",
+   "w": 5.44,
+   "h": 3
+  },
+  "marsh_set1": {
+   "file": "scenery/marsh_set1.png",
+   "w": 4.04,
+   "h": 3.4
   }
  },
  "artifacts": {

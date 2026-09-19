@@ -37,14 +37,24 @@ const fragment = /* glsl */`
   }
   float fbm2(vec2 p) { return vnoise(p) * 0.65 + vnoise(p * 2.13 + 7.7) * 0.35; }
   float fbm3(vec2 p) { return vnoise(p) * 0.55 + vnoise(p * 2.07 + 3.1) * 0.3 + vnoise(p * 4.3 + 9.2) * 0.15; }
+  // نقاشی با بافت مرجع: سه نمونه با مقیاس/چرخش متفاوت با نویز آمیخته می‌شوند تا تقارن تکرار آینه‌ای دیده نشود
+  vec3 paint(sampler2D t, vec2 s) {
+    vec2 u1 = s * texScale;
+    vec2 u2 = vec2(-s.y, s.x) * texScale * 0.71 + 0.37;
+    vec2 u3 = (s + vec2(13.0, 7.0)) * texScale * 1.37;
+    vec3 a = texture2D(t, u1).rgb, b = texture2D(t, u2).rgb, c = texture2D(t, u3).rgb;
+    float n1 = fbm2(s * 0.15 + 5.0), n2 = fbm2(s * 0.09 + 41.0);
+    vec3 m = mix(mix(a, b, smoothstep(0.3, 0.7, n1)), c, smoothstep(0.35, 0.75, n2));
+    return m * (0.86 + 0.28 * fbm3(s * 0.3));
+  }
   float idAt(vec2 tile) { vec2 uv = (tile - origin + 0.5) / texSize; return floor(texture2D(tTerrain, uv).r * 255.0 + 0.5); }
 
   // رنگ هر نوع زمین در نقطه‌ی p (مختصات جهان)
   vec3 terrainColor(float id, vec2 p, vec2 q) {
     vec2 s = p + seed;
     if (id < 1.5) { // چمن (امن/دشت)
-      if (id < 0.5 && hasTex[0] > 0.5) return texture2D(tGrass, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
-      if (id > 0.5 && hasTex[1] > 0.5) return texture2D(tDry, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
+      if (id < 0.5 && hasTex[0] > 0.5) return paint(tGrass, s);
+      if (id > 0.5 && hasTex[1] > 0.5) return paint(tDry, s);
       float big = fbm3(s * 0.27) * 0.7 + fbm2(s * 1.1 + 33.0) * 0.3;
       vec3 dark = vec3(0.33, 0.50, 0.20), light = vec3(0.60, 0.74, 0.34);
       if (id < 0.5) { dark = vec3(0.39, 0.55, 0.23); light = vec3(0.65, 0.77, 0.37); }
@@ -59,7 +69,7 @@ const fragment = /* glsl */`
       return c;
     }
     if (id < 2.5) { // کوهستان: صخره‌ی سرد آبی-خاکستری با برف و ترک (مرجع ۷)
-      if (hasTex[2] > 0.5) return texture2D(tRock, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
+      if (hasTex[2] > 0.5) return paint(tRock, s);
       float big = fbm3(s * 0.4);
       float mid = fbm3(s * 1.3 + 15.0);
       vec3 c = mix(vec3(0.20, 0.23, 0.29), vec3(0.50, 0.54, 0.60), big * 0.6 + mid * 0.4);
@@ -72,7 +82,7 @@ const fragment = /* glsl */`
       return mix(c, vec3(0.55, 0.62, 0.72), mist * 0.35);
     }
     if (id < 3.5) { // مرداب: گل تیره‌ی آبی-بنفش، برکه‌های فیروزه‌ای، گیاه گلگون (مرجع ۸)
-      if (hasTex[3] > 0.5) return texture2D(tMarsh, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
+      if (hasTex[3] > 0.5) return paint(tMarsh, s);
       float big = fbm3(s * 0.5);
       vec3 c = mix(vec3(0.10, 0.12, 0.19), vec3(0.22, 0.25, 0.32), big);
       float pool = fbm2(s * 0.55 + 23.0);
@@ -86,7 +96,7 @@ const fragment = /* glsl */`
       return c;
     }
     if (id < 4.5) { // سرزمین خطر: زمین خاکستری-آبی ترک‌خورده با رگه‌های سرخ گداخته (مرجع ۱۰)
-      if (hasTex[4] > 0.5) return texture2D(tCracked, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
+      if (hasTex[4] > 0.5) return paint(tCracked, s);
       float big = fbm3(s * 0.4);
       vec3 c = mix(vec3(0.17, 0.18, 0.23), vec3(0.40, 0.41, 0.46), big);
       float crack = abs(vnoise(s * 1.9 + 3.0) - 0.5) + 0.3 * abs(vnoise(s * 4.1 + 6.0) - 0.5);
@@ -101,7 +111,7 @@ const fragment = /* glsl */`
       return c;
     }
     if (id < 5.5) { // جهنمی: سنگ سیاه با رودهای گدازه و شعله‌ی بنفش (مرجع ۹)
-      if (hasTex[5] > 0.5) return texture2D(tLava, s * texScale).rgb * (0.86 + 0.28 * fbm3(s * 0.3));
+      if (hasTex[5] > 0.5) return paint(tLava, s);
       float big = fbm3(s * 0.5);
       vec3 c = mix(vec3(0.05, 0.04, 0.06), vec3(0.20, 0.14, 0.16), big);
       float river = smoothstep(0.05, 0.0, abs(vnoise(s * 0.9 + 11.0) - 0.5)) * smoothstep(0.4, 0.7, fbm2(s * 0.4 + 4.0));
@@ -116,7 +126,7 @@ const fragment = /* glsl */`
       return c;
     }
     if (id < 6.5) { // مقبره: سنگفرش تیره‌ی ویرانه با رون‌های فیروزه‌ای (مرجع ۶)
-      if (hasTex[6] > 0.5) return texture2D(tStone, s * texScale).rgb;
+      if (hasTex[6] > 0.5) return paint(tStone, s);
       vec2 g = fract(q * 2.0); float line = smoothstep(0.0, 0.07, min(min(g.x, 1.0 - g.x), min(g.y, 1.0 - g.y)));
       vec3 c = mix(vec3(0.18, 0.19, 0.23), vec3(0.34, 0.35, 0.40), vnoise(s * 3.0));
       float rune = smoothstep(0.03, 0.0, abs(vnoise(s * 3.5 + 5.0) - 0.5)) * smoothstep(0.5, 0.7, vnoise(s * 0.8));
@@ -124,13 +134,13 @@ const fragment = /* glsl */`
       return c;
     }
     if (id < 7.5) { // خانه‌ی گنج: سنگفرش طلایی
-      if (hasTex[7] > 0.5) return texture2D(tGold, s * texScale).rgb;
+      if (hasTex[7] > 0.5) return paint(tGold, s);
       vec2 g = fract(q * 3.0); float line = smoothstep(0.0, 0.08, min(min(g.x, 1.0 - g.x), min(g.y, 1.0 - g.y)));
       vec3 c = mix(vec3(0.72, 0.58, 0.30), vec3(0.88, 0.76, 0.44), vnoise(s * 3.0));
       return c * (0.7 + 0.3 * line);
     }
     // دره: صخره‌ی تیره‌ی لبه (عمق در بیرون اعمال می‌شود)
-    if (hasTex[8] > 0.5) return texture2D(tChasm, s * texScale).rgb;
+    if (hasTex[8] > 0.5) return paint(tChasm, s);
     float big = fbm3(s * 0.6);
     vec3 c = mix(vec3(0.22, 0.18, 0.16), vec3(0.36, 0.30, 0.26), big);
     float crack = abs(vnoise(s * 2.4) - 0.5);
@@ -189,7 +199,7 @@ export function makeGroundMaterial(tex: DataTexture, originX: number, originZ: n
   const hasTex: number[] = [];
   TEX_KEYS.forEach((k, i) => { const t = textures[k]; texUniforms[names[i]] = { value: t ?? blank }; hasTex.push(t ? 1 : 0); });
   return new ShaderMaterial({
-    uniforms: { tTerrain: { value: tex }, origin: { value: new Vector2(originX, originZ) }, texSize: { value: size }, seed: { value: (seed % 1000) * 0.37 }, ...texUniforms, hasTex: { value: hasTex }, texScale: { value: 0.25 } },
+    uniforms: { tTerrain: { value: tex }, origin: { value: new Vector2(originX, originZ) }, texSize: { value: size }, seed: { value: (seed % 1000) * 0.37 }, ...texUniforms, hasTex: { value: hasTex }, texScale: { value: 0.33 } },
     vertexShader: vertex, fragmentShader: fragment,
   });
 }
