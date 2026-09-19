@@ -18,7 +18,7 @@ import { ico, UNIT_ICON, portrait, artifactIcon, setIconImages, setPortraits, se
 type Tab = 'map' | 'army' | 'shop' | 'wallet' | 'artifacts' | 'clan' | 'dashboard';
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'map', label: 'نقشه', icon: 'home' }, { id: 'army', label: 'لشگر', icon: 'army' }, { id: 'shop', label: 'فروشگاه', icon: 'coin' }, { id: 'wallet', label: 'کیف پول', icon: 'toman' },
-  { id: 'artifacts', label: 'آرتیفکت', icon: 'artifact' }, { id: 'clan', label: 'کلن', icon: 'guard' }, { id: 'dashboard', label: 'داشبورد', icon: 'level' },
+  { id: 'artifacts', label: 'آرتیفکت', icon: 'artifact' }, { id: 'clan', label: 'کلن', icon: 'share' }, { id: 'dashboard', label: 'داشبورد', icon: 'level' },
 ];
 
 const $ = (id: string) => document.getElementById(id)!;
@@ -60,7 +60,7 @@ export class Game {
     this.renderAll();
     await this.world.init();
     // آیکون‌ها و پرتره‌های شیت مرجع در رابط
-    setIconImages(['coin', 'toman', 'energy', 'artifact', 'level'].filter(n => this.world.sprites.has('icons.' + n)));
+    setIconImages(['coin', 'toman', 'energy', 'artifact', 'level', 'pool', 'treasure', 'share', 'season', 'luck', 'army', 'home'].filter(n => this.world.sprites.has('icons.' + n)));
     setPortraits(ALL_UNITS.filter(u => this.world.sprites.has(`units.${u}.idle`)));
     setArtifactIcons(['crown', 'crystal', 'medal', 'goblet', 'mask', 'dagger', 'coin', 'necklace', 'orb', 'scroll'].filter(n => this.world.sprites.has('artifacts.' + n)));
     this.world.setFocus(focus.x, focus.y);

@@ -1,148 +1,14 @@
 {
- "ground": {
-  "safe": {
-   "file": "ground/safe.png",
-   "w": 1,
-   "h": 1
-  },
-  "plain": {
-   "file": "ground/plain.png",
-   "w": 1,
-   "h": 1
-  },
-  "mountain": {
-   "file": "ground/mountain.png",
-   "w": 1,
-   "h": 1
-  },
-  "marsh": {
-   "file": "ground/marsh.png",
-   "w": 1,
-   "h": 1
-  },
-  "danger": {
-   "file": "ground/danger.png",
-   "w": 1,
-   "h": 1
-  },
-  "hell": {
-   "file": "ground/hell.png",
-   "w": 1,
-   "h": 1
-  },
-  "tomb": {
-   "file": "ground/tomb.png",
-   "w": 1,
-   "h": 1
-  },
-  "treasure": {
-   "file": "ground/treasure.png",
-   "w": 1,
-   "h": 1
-  },
-  "valley": {
-   "file": "ground/valley.png",
-   "w": 1,
-   "h": 1
-  }
- },
- "monsters": {
-  "plain": {
-   "file": "monsters/plain.png",
-   "w": 0.86,
-   "h": 1.2
-  },
-  "mountain": {
-   "file": "monsters/mountain.png",
-   "w": 0.86,
-   "h": 1.2
-  },
-  "marsh": {
-   "file": "monsters/marsh.png",
-   "w": 0.9,
-   "h": 1.2
-  },
-  "danger": {
-   "file": "monsters/danger.png",
-   "w": 0.86,
-   "h": 1.2
-  },
-  "hell": {
-   "file": "monsters/hell.png",
-   "w": 0.83,
-   "h": 1.2
-  },
-  "treasure": {
-   "file": "monsters/treasure.png",
-   "w": 1.15,
-   "h": 1.6
-  },
-  "tomb": {
-   "file": "monsters/tomb.png",
-   "w": 0.5,
-   "h": 1.3
-  },
-  "forest": {
-   "file": "monsters/forest.png",
-   "w": 0.91,
-   "h": 1.2
-  }
- },
  "units": {
-  "explorer": {
-   "idle": {
-    "file": "units/explorer_idle.png",
-    "w": 0.84,
-    "h": 1.2
-   },
-   "walk": {
-    "file": "units/explorer_walk.png",
-    "w": 1.15,
-    "h": 1.15,
-    "frames": 4,
-    "cols": 4,
-    "fps": 6
-   }
-  },
   "soldier": {
    "idle": {
     "file": "units/soldier_idle.png",
-    "w": 0.71,
-    "h": 1.2
+    "w": 0.92,
+    "h": 1.15
    },
    "walk": {
     "file": "units/soldier_walk.png",
-    "w": 1.15,
-    "h": 1.15,
-    "frames": 4,
-    "cols": 4,
-    "fps": 6
-   }
-  },
-  "guide": {
-   "idle": {
-    "file": "units/guide_idle.png",
-    "w": 0.74,
-    "h": 1.2
-   },
-   "walk": {
-    "file": "units/guide_walk.png",
-    "w": 1.15,
-    "h": 1.15,
-    "frames": 4,
-    "cols": 4,
-    "fps": 6
-   }
-  },
-  "archer": {
-   "idle": {
-    "file": "units/archer_idle.png",
-    "w": 0.79,
-    "h": 1.2
-   },
-   "walk": {
-    "file": "units/archer_walk.png",
-    "w": 1.15,
+    "w": 0.92,
     "h": 1.15,
     "frames": 4,
     "cols": 4,
@@ -152,12 +18,57 @@
   "guard": {
    "idle": {
     "file": "units/guard_idle.png",
-    "w": 0.95,
-    "h": 1.3
+    "w": 0.92,
+    "h": 1.15
    },
    "walk": {
     "file": "units/guard_walk.png",
-    "w": 1.15,
+    "w": 0.92,
+    "h": 1.15,
+    "frames": 4,
+    "cols": 4,
+    "fps": 6
+   }
+  },
+  "archer": {
+   "idle": {
+    "file": "units/archer_idle.png",
+    "w": 0.92,
+    "h": 1.15
+   },
+   "walk": {
+    "file": "units/archer_walk.png",
+    "w": 0.92,
+    "h": 1.15,
+    "frames": 4,
+    "cols": 4,
+    "fps": 6
+   }
+  },
+  "explorer": {
+   "idle": {
+    "file": "units/explorer_idle.png",
+    "w": 0.92,
+    "h": 1.15
+   },
+   "walk": {
+    "file": "units/explorer_walk.png",
+    "w": 0.92,
+    "h": 1.15,
+    "frames": 4,
+    "cols": 4,
+    "fps": 6
+   }
+  },
+  "guide": {
+   "idle": {
+    "file": "units/guide_idle.png",
+    "w": 0.92,
+    "h": 1.15
+   },
+   "walk": {
+    "file": "units/guide_walk.png",
+    "w": 0.92,
     "h": 1.15,
     "frames": 4,
     "cols": 4,
@@ -165,190 +76,160 @@
    }
   }
  },
- "frames": {
-  "explorer": {
-   "frame_idle": {
-    "file": "frames/explorer_frame_idle.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_walk": {
-    "file": "frames/explorer_frame_walk.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_run": {
-    "file": "frames/explorer_frame_run.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_attack": {
-    "file": "frames/explorer_frame_attack.png",
-    "w": 0.76,
-    "h": 1
-   }
-  },
-  "soldier": {
-   "frame_idle": {
-    "file": "frames/soldier_frame_idle.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_walk": {
-    "file": "frames/soldier_frame_walk.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_run": {
-    "file": "frames/soldier_frame_run.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_attack": {
-    "file": "frames/soldier_frame_attack.png",
-    "w": 0.76,
-    "h": 1
-   }
-  },
-  "guide": {
-   "frame_idle": {
-    "file": "frames/guide_frame_idle.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_walk": {
-    "file": "frames/guide_frame_walk.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_run": {
-    "file": "frames/guide_frame_run.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_attack": {
-    "file": "frames/guide_frame_attack.png",
-    "w": 0.76,
-    "h": 1
-   }
-  },
-  "archer": {
-   "frame_idle": {
-    "file": "frames/archer_frame_idle.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_walk": {
-    "file": "frames/archer_frame_walk.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_run": {
-    "file": "frames/archer_frame_run.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_attack": {
-    "file": "frames/archer_frame_attack.png",
-    "w": 0.76,
-    "h": 1
-   }
-  },
-  "guard": {
-   "frame_idle": {
-    "file": "frames/guard_frame_idle.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_walk": {
-    "file": "frames/guard_frame_walk.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_run": {
-    "file": "frames/guard_frame_run.png",
-    "w": 0.76,
-    "h": 1
-   },
-   "frame_attack": {
-    "file": "frames/guard_frame_attack.png",
-    "w": 0.76,
-    "h": 1
-   }
-  }
- },
- "tiles": {
-  "safe": {
-   "file": "tiles/safe.png",
-   "w": 1,
-   "h": 1
-  },
+ "monsters": {
   "plain": {
-   "file": "tiles/plain.png",
-   "w": 1,
-   "h": 1
+   "file": "monsters/plain.png",
+   "w": 0.98,
+   "h": 1.1
   },
   "mountain": {
-   "file": "tiles/mountain.png",
-   "w": 1,
-   "h": 1
+   "file": "monsters/mountain.png",
+   "w": 1.24,
+   "h": 1.4
   },
   "marsh": {
-   "file": "tiles/marsh.png",
-   "w": 1,
-   "h": 1
+   "file": "monsters/marsh.png",
+   "w": 1.02,
+   "h": 1.15
   },
   "danger": {
-   "file": "tiles/danger.png",
-   "w": 1,
-   "h": 1
+   "file": "monsters/danger.png",
+   "w": 1.16,
+   "h": 1.3
   },
   "hell": {
-   "file": "tiles/hell.png",
-   "w": 1,
-   "h": 1
+   "file": "monsters/hell.png",
+   "w": 1.29,
+   "h": 1.45
   },
   "tomb": {
-   "file": "tiles/tomb.png",
-   "w": 1,
-   "h": 1
+   "file": "monsters/tomb.png",
+   "w": 1.2,
+   "h": 1.35
   },
   "treasure": {
-   "file": "tiles/treasure.png",
-   "w": 1,
-   "h": 1
-  },
-  "valley": {
-   "file": "tiles/valley.png",
-   "w": 1,
-   "h": 1
+   "file": "monsters/treasure.png",
+   "w": 1.51,
+   "h": 1.7
   }
  },
  "buildings": {
   "camp": {
    "file": "buildings/camp.png",
-   "w": 3.4,
-   "h": 3.1
+   "w": 3.63,
+   "h": 2.9
   },
   "clan_camp": {
    "file": "buildings/clan_camp.png",
-   "w": 2.2,
-   "h": 2.6
+   "w": 3.63,
+   "h": 2.9
   },
   "tomb": {
    "file": "buildings/tomb.png",
-   "w": 1.7,
-   "h": 2.2
+   "w": 3.25,
+   "h": 2.6
   },
   "treasure": {
    "file": "buildings/treasure.png",
-   "w": 2.8,
-   "h": 2.9
+   "w": 3.38,
+   "h": 2.7
   },
   "caravan": {
    "file": "buildings/caravan.png",
-   "w": 2.2,
-   "h": 1.7
+   "w": 1.75,
+   "h": 1.4
+  },
+  "tower": {
+   "file": "buildings/tower.png",
+   "w": 0.76,
+   "h": 0.95
+  },
+  "tower_clan": {
+   "file": "buildings/tower_clan.png",
+   "w": 0.76,
+   "h": 0.95
+  }
+ },
+ "scenery": {
+  "tree": {
+   "file": "scenery/tree.png",
+   "w": 0.96,
+   "h": 1.2
+  },
+  "tree2": {
+   "file": "scenery/tree2.png",
+   "w": 1,
+   "h": 1.25
+  },
+  "dead_tree": {
+   "file": "scenery/dead_tree.png",
+   "w": 0.88,
+   "h": 1.1
+  },
+  "bush": {
+   "file": "scenery/bush.png",
+   "w": 0.8,
+   "h": 0.6
+  },
+  "rock": {
+   "file": "scenery/rock.png",
+   "w": 0.73,
+   "h": 0.55
+  },
+  "big_rock": {
+   "file": "scenery/big_rock.png",
+   "w": 0.95,
+   "h": 0.95
+  },
+  "grass": {
+   "file": "scenery/grass.png",
+   "w": 0.48,
+   "h": 0.4
+  },
+  "flower": {
+   "file": "scenery/flower.png",
+   "w": 0.5,
+   "h": 0.5
+  },
+  "mushroom": {
+   "file": "scenery/mushroom.png",
+   "w": 0.45,
+   "h": 0.45
+  },
+  "bones": {
+   "file": "scenery/bones.png",
+   "w": 0.49,
+   "h": 0.35
+  },
+  "ruin": {
+   "file": "scenery/ruin.png",
+   "w": 1.06,
+   "h": 0.95
+  },
+  "sign": {
+   "file": "scenery/sign.png",
+   "w": 0.56,
+   "h": 0.65
+  },
+  "pond": {
+   "file": "scenery/pond.png",
+   "w": 1.07,
+   "h": 0.75
+  },
+  "fire": {
+   "file": "scenery/fire.png",
+   "w": 0.6,
+   "h": 0.6
+  },
+  "crystal": {
+   "file": "scenery/crystal.png",
+   "w": 0.74,
+   "h": 0.85
+  },
+  "statue": {
+   "file": "scenery/statue.png",
+   "w": 0.73,
+   "h": 1.05
   }
  },
  "artifacts": {
@@ -403,103 +284,6 @@
    "h": 1
   }
  },
- "scenery": {
-  "tree": {
-   "file": "scenery/tree.png",
-   "w": 0.76,
-   "h": 0.89
-  },
-  "dead_tree": {
-   "file": "scenery/dead_tree.png",
-   "w": 0.77,
-   "h": 0.85
-  },
-  "bush": {
-   "file": "scenery/bush.png",
-   "w": 0.77,
-   "h": 0.51
-  },
-  "rock": {
-   "file": "scenery/rock.png",
-   "w": 0.77,
-   "h": 0.47
-  },
-  "big_rock": {
-   "file": "scenery/big_rock.png",
-   "w": 0.77,
-   "h": 0.81
-  },
-  "grass": {
-   "file": "scenery/grass.png",
-   "w": 0.76,
-   "h": 0.38
-  },
-  "flower": {
-   "file": "scenery/flower.png",
-   "w": 0.76,
-   "h": 0.42
-  },
-  "mushroom": {
-   "file": "scenery/mushroom.png",
-   "w": 0.76,
-   "h": 0.42
-  },
-  "bones": {
-   "file": "scenery/bones.png",
-   "w": 0.76,
-   "h": 0.38
-  },
-  "ruin": {
-   "file": "scenery/ruin.png",
-   "w": 0.77,
-   "h": 0.85
-  },
-  "ancient_stone": {
-   "file": "scenery/ancient_stone.png",
-   "w": 0.77,
-   "h": 0.68
-  },
-  "sign": {
-   "file": "scenery/sign.png",
-   "w": 0.77,
-   "h": 0.51
-  },
-  "treasure_part": {
-   "file": "scenery/treasure_part.png",
-   "w": 0.77,
-   "h": 0.51
-  },
-  "pond": {
-   "file": "scenery/pond.png",
-   "w": 0.77,
-   "h": 0.68
-  },
-  "mud": {
-   "file": "scenery/mud.png",
-   "w": 0.77,
-   "h": 0.51
-  },
-  "fire": {
-   "file": "scenery/fire.png",
-   "w": 0.76,
-   "h": 0.59
-  },
-  "crystal": {
-   "file": "scenery/crystal.png",
-   "w": 0.76,
-   "h": 0.55
-  },
-  "statue": {
-   "file": "scenery/statue.png",
-   "w": 0.77,
-   "h": 0.77
-  },
-  "small_ruin": {
-   "file": "scenery/small_ruin.png",
-   "w": 0.77,
-   "h": 0.68
-  }
- },
  "icons": {
   "coin": {
    "file": "icons/coin.png",
@@ -525,38 +309,42 @@
    "file": "icons/level.png",
    "w": 1,
    "h": 1
-  }
- },
- "markers": {
-  "player_camp": {
-   "file": "markers/player_camp.png",
-   "w": 0.7,
-   "h": 0.7
   },
-  "clan_camp": {
-   "file": "markers/clan_camp.png",
-   "w": 0.7,
-   "h": 0.7
-  },
-  "tomb": {
-   "file": "markers/tomb.png",
-   "w": 0.7,
-   "h": 0.7
+  "pool": {
+   "file": "icons/pool.png",
+   "w": 1,
+   "h": 1
   },
   "treasure": {
-   "file": "markers/treasure.png",
-   "w": 0.7,
-   "h": 0.7
+   "file": "icons/treasure.png",
+   "w": 1,
+   "h": 1
   },
-  "destination": {
-   "file": "markers/destination.png",
-   "w": 0.7,
-   "h": 0.7
+  "share": {
+   "file": "icons/share.png",
+   "w": 1,
+   "h": 1
   },
-  "caravan": {
-   "file": "markers/caravan.png",
-   "w": 0.7,
-   "h": 0.7
+  "season": {
+   "file": "icons/season.png",
+   "w": 1,
+   "h": 1
+  },
+  "luck": {
+   "file": "icons/luck.png",
+   "w": 1,
+   "h": 1
+  },
+  "army": {
+   "file": "icons/army.png",
+   "w": 1,
+   "h": 1
+  },
+  "home": {
+   "file": "icons/home.png",
+   "w": 1,
+   "h": 1
   }
- }
+ },
+ "markers": {}
 }

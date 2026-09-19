@@ -70,16 +70,16 @@ const SPAWNS: Record<Terrain, Spawn[]> = {
 
 // هر گروه صحنه‌آرایی → اسپرایت‌های شیت مرجع (اگر موجود باشند، به‌جای مدل سه‌بعدی)
 const GROUP_SPRITES: Record<string, string[]> = {
-  tree: ['scenery.tree', 'scenery.tree', 'scenery.bush'], pine: ['scenery.tree', 'scenery.big_rock'], pineSmall: ['scenery.bush', 'scenery.rock'],
-  darkTree: ['scenery.dead_tree', 'scenery.tree'], dead: ['scenery.dead_tree', 'scenery.bones', 'scenery.small_ruin'],
-  rockBig: ['scenery.big_rock', 'scenery.ruin', 'scenery.ancient_stone'], rock: ['scenery.rock', 'scenery.rock', 'scenery.statue'], pebble: ['scenery.rock'],
+  tree: ['scenery.tree', 'scenery.tree', 'scenery.tree2', 'scenery.bush'], pine: ['scenery.tree2', 'scenery.tree2', 'scenery.big_rock'], pineSmall: ['scenery.bush', 'scenery.rock'],
+  darkTree: ['scenery.dead_tree', 'scenery.tree'], dead: ['scenery.dead_tree', 'scenery.bones', 'scenery.ruin'],
+  rockBig: ['scenery.big_rock', 'scenery.ruin', 'scenery.statue'], rock: ['scenery.rock', 'scenery.rock', 'scenery.big_rock'], pebble: ['scenery.rock'],
   bush: ['scenery.bush', 'scenery.flower'], grass: ['scenery.grass', 'scenery.grass', 'scenery.flower'], flower: ['scenery.flower'],
-  marshPlant: ['scenery.mushroom', 'scenery.mud', 'scenery.pond'], lily: ['scenery.pond'],
+  marshPlant: ['scenery.mushroom', 'scenery.grass'], lily: ['scenery.pond'],
 };
 const TERRAIN_EXTRA: Partial<Record<Terrain, { key: string; chance: number }[]>> = {
   danger: [{ key: 'scenery.fire', chance: 0.012 }, { key: 'scenery.bones', chance: 0.01 }, { key: 'scenery.crystal', chance: 0.005 }],
   hell: [{ key: 'scenery.fire', chance: 0.03 }, { key: 'scenery.crystal', chance: 0.015 }],
-  mountain: [{ key: 'scenery.crystal', chance: 0.012 }, { key: 'scenery.ancient_stone', chance: 0.008 }],
+  mountain: [{ key: 'scenery.crystal', chance: 0.012 }, { key: 'scenery.statue', chance: 0.005 }],
   safe: [{ key: 'scenery.sign', chance: 0.004 }],
   plain: [{ key: 'scenery.pond', chance: 0.005 }, { key: 'scenery.ruin', chance: 0.003 }],
 };

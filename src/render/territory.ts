@@ -47,7 +47,7 @@ export class Territory {
     if (sprites && sprites.ready && !this.spriteTried && camQuat) {
       this.spriteTried = true;
       const r = sprites.makeInstanced('buildings.tower', CAP, camQuat) ?? sprites.makeInstanced('markers.player_camp', CAP, camQuat);
-      const rc = sprites.makeInstanced('markers.clan_camp', CAP, camQuat);
+      const rc = sprites.makeInstanced('buildings.tower_clan', CAP, camQuat);
       if (r) { this.spriteTower = r.mesh; this.group.add(r.mesh); if (rc) { this.spriteTowerClan = rc.mesh; this.group.add(rc.mesh); } for (const p of this.parts) p.visible = false; }
     }
     if (this.spriteTower && camQuat) {

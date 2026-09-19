@@ -3,22 +3,22 @@ import { Color } from 'three';
 import type { Terrain } from '../rules/constants';
 
 export const GROUND: Record<Terrain, Color> = {
-  safe:     new Color('#a4c74d'),
-  plain:    new Color('#8fbc42'),
-  mountain: new Color('#8e8778'),
-  marsh:    new Color('#4c8f68'),
-  danger:   new Color('#9a4b45'),
-  hell:     new Color('#6b302b'),
-  tomb:     new Color('#7d6483'),
-  treasure: new Color('#c99b4a'),
-  valley:   new Color('#4d4749'),
+  safe:     new Color('#a9d452'),
+  plain:    new Color('#8ec946'),
+  mountain: new Color('#a39c8c'),
+  marsh:    new Color('#4fa07a'),
+  danger:   new Color('#b0553f'),
+  hell:     new Color('#7a3328'),
+  tomb:     new Color('#8a6f96'),
+  treasure: new Color('#d9b45a'),
+  valley:   new Color('#5a5250'),
 };
-export const GRASS_DARK = new Color('#7aa93a');   // لکه‌های چمن تیره‌تر (الگوی کاشیِ نرم)
-export const MARSH_FLOOR = new Color('#3d7a5c');
-export const SAND = new Color('#e7d59a');
+export const GRASS_DARK = new Color('#7fbf3a');   // لکه‌های چمن تیره‌تر (الگوی کاشیِ نرم)
+export const MARSH_FLOOR = new Color('#3f8a68');
+export const SAND = new Color('#e9d68f');
 export const DIRT = new Color('#d5b371');
 export const SNOW = new Color('#f2f0ea');
-export const WATER = new Color('#3aa4a0');
+export const WATER = new Color('#4fc3d9');
 export const ROCK_TINT = new Color('#c4bcb1');
 export const HELL_ROCK_TINT = new Color('#7a5f5a');
 export const DANGER_LEAF_TINT = new Color('#c48a5a');
