@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # نصب کامل «بازی گنج» روی یک سرور خالی اوبونتو (۲۲.۰۴ / ۲۴.۰۴) در آروان‌کلاد.
-# اجرا با root:  bash deploy/install.sh example.com admin@example.com
+# اجرا با root:  bash deploy/install.sh game.mydomain.ir me@mail.com   (دامنه‌ی واقعی خودتان؛ example.com نمونه است)
 #   $1 = دامنه (اختیاری؛ بدون دامنه فقط HTTP روی IP)     $2 = ایمیل برای گواهی Let's Encrypt (اختیاری)
 set -euo pipefail
 
@@ -57,8 +57,7 @@ if [ ! -f "$APP_DIR/server/.env" ]; then
   log "ساخت server/.env (کلیدها تصادفی؛ گذرواژه‌ی ادمین را یادداشت کنید)"
   ADMIN_PW="$(head -c 12 /dev/urandom | base64 | tr -d '/+=' | head -c 14)"
   JWT="$(head -c 48 /dev/urandom | base64 | tr -d '/+=\n')"
-  PUB="http://${DOMAIN:-$(curl -fsSL -4 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')}"
-  [ -n "$DOMAIN" ] && [ -n "$EMAIL" ] && PUB="https://$DOMAIN"
+  PUB="http://${DOMAIN:-$(curl -fsSL -4 --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')}"
   cat > "$APP_DIR/server/.env" <<ENV
 PORT=8787
 HOST=127.0.0.1
@@ -68,7 +67,7 @@ JWT_SECRET=$JWT
 ADMIN_PASSWORD=$ADMIN_PW
 PUBLIC_URL=$PUB
 TRUST_PROXY=1
-COOKIE_SECURE=$([ -n "$DOMAIN" ] && [ -n "$EMAIL" ] && echo 1 || echo 0)
+COOKIE_SECURE=0
 TICK_MS=250
 # ZARINPAL_MERCHANT=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 # ZARINPAL_SANDBOX=0
@@ -93,30 +92,17 @@ systemctl daemon-reload
 systemctl enable --now ganjgame.service ganjgame-backup.timer
 systemctl restart ganjgame.service
 
-# ---------- nginx ----------
-log "nginx"
-SERVER_NAME="${DOMAIN:-_}"
-sed "s#__SERVER_NAME__#$SERVER_NAME#g; s#__APP_DIR__#$APP_DIR#g" "$APP_DIR/deploy/nginx.conf" > /etc/nginx/sites-available/ganjgame
-ln -sf /etc/nginx/sites-available/ganjgame /etc/nginx/sites-enabled/ganjgame
-rm -f /etc/nginx/sites-enabled/default
-nginx -t && systemctl reload nginx
-
-# ---------- فایروال ----------
+# ---------- فایروال (ufw) ----------
 log "فایروال (ufw)"
 ufw allow OpenSSH >/dev/null || true
 ufw allow 'Nginx Full' >/dev/null || true
 ufw --force enable >/dev/null || true
 
-# ---------- HTTPS ----------
-if [ -n "$DOMAIN" ] && [ -n "$EMAIL" ]; then
-  log "گواهی HTTPS (Let's Encrypt)"
-  if apt-get install -y certbot python3-certbot-nginx; then
-    certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect || echo "certbot ناموفق بود؛ بعداً دستی اجرا کنید: certbot --nginx -d $DOMAIN"
-  fi
-fi
+# ---------- nginx + دامنه + HTTPS ----------
+log "nginx و دامنه"
+bash "$APP_DIR/deploy/set-domain.sh" "$DOMAIN" "$EMAIL"
 
 log "تمام شد"
-echo "آدرس بازی:   ${DOMAIN:+https://$DOMAIN}${DOMAIN:-http://$(hostname -I | awk '{print $1}')}"
 echo "پنل ادمین:   …/admin.html   (گذرواژه در $APP_DIR/server/.env)"
 echo "وضعیت:       systemctl status ganjgame     لاگ: journalctl -u ganjgame -f"
 echo "پشتیبان‌ها:  $APP_DIR/backups (هر شب، ۱۴ نسخه)"

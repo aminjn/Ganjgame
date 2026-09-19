@@ -12,7 +12,7 @@
 apt-get update && apt-get install -y git
 git clone https://github.com/aminjn/Ganjgame.git /opt/ganjgame
 cd /opt/ganjgame
-bash deploy/install.sh example.com admin@example.com     # با دامنه و ایمیل → HTTPS خودکار
+bash deploy/install.sh game.mydomain.ir me@mail.com     # دامنه‌ی واقعی + ایمیل → HTTPS خودکار (example.com نمونه است و پذیرفته نمی‌شود)
 # یا بدون دامنه (فقط HTTP روی IP):
 bash deploy/install.sh
 ```
@@ -38,6 +38,13 @@ bash deploy/install.sh
 
 ### درگاه پرداخت
 در `server/.env` مقدار `ZARINPAL_MERCHANT` را بگذارید و سرویس را ری‌استارت کنید (`systemctl restart ganjgame`). تا وقتی مرچنت خالی باشد، شارژ کیف پول به‌صورت «دستی» ثبت می‌شود: بازیکن مبلغ را کارت‌به‌کارت می‌کند و ادمین در تب «واریز و برداشت» تأیید می‌کند. برداشت‌ها همیشه دستی‌اند: ادمین پس از واریز به شبا «پرداخت شد» را می‌زند.
+
+### دامنه و HTTPS بعد از نصب
+```bash
+bash /opt/ganjgame/deploy/set-domain.sh                       # بدون دامنه: HTTP روی IP
+bash /opt/ganjgame/deploy/set-domain.sh game.mydomain.ir me@mail.com   # دامنه + گواهی Let's Encrypt
+```
+تا وقتی HTTPS برقرار نشده باشد، `COOKIE_SECURE=0` می‌ماند تا ورود روی HTTP کار کند. رکورد A دامنه باید پیش از اجرا به IP سرور اشاره کند.
 
 ### به‌روزرسانی نسخه
 ```bash
