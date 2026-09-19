@@ -22,7 +22,8 @@ export function findPath(start: P, goal: P, cost: (x: number, y: number) => numb
   heap.push(h(start.x, start.y), { x: start.x, y: start.y, k: sk });
   const closed = new Set<string>();
   let expanded = 0;
-  while (heap.size && expanded < 60000) {
+  const budget = Math.min(200000, Math.max(60000, maxLen * 300));
+  while (heap.size && expanded < budget) {
     const cur = heap.pop()!;
     if (closed.has(cur.k)) continue;
     closed.add(cur.k); expanded++;

@@ -9,6 +9,7 @@ import { TerrainChunks } from './terrainMesh';
 import { Scenery } from './scenery';
 import { makeCamp, makeCaravan, makeTomb, makeTreasure, makeSelection, makeLabel, buildOwnedOverlay, makeFlag, disposeObject, loadProps } from './markers';
 import { TorusGeometry, MeshBasicMaterial } from 'three';
+import * as THREE from 'three';
 import { Units } from './units';
 import { Territory } from './territory';
 import { SpriteLib, TileGround } from './sprites';
@@ -88,6 +89,24 @@ export class World {
   private followFrames = 0;
   private followTarget: Vector3 | null = null;
   onTap: ((tile: P) => void) | null = null;
+  private pops: { obj: Sprite; t0: number; y0: number; x: number; z: number }[] = [];
+
+  // متن شناور روی نقشه (آسیب، تجربه، پیروزی/شکست، شیء پیداشده)
+  popText(tile: P, text: string, color = '#ffe9a8', big = false) {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 128;
+    const x = c.getContext('2d')!;
+    x.font = `900 ${big ? 64 : 48}px Vazirmatn, sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.lineWidth = 12; x.strokeStyle = '#2b1c10'; x.lineJoin = 'round'; x.strokeText(text, 256, 64);
+    x.fillStyle = color; x.fillText(text, 256, 64);
+    const tex = new (THREE.CanvasTexture)(c); tex.colorSpace = SRGBColorSpace;
+    const sp = new Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+    sp.scale.set(big ? 3.2 : 2.4, big ? 0.8 : 0.6, 1); sp.renderOrder = 20;
+    const wx = tile.x + 0.5, wz = tile.y + 0.5; const y0 = this.heightAt(wx, wz) + 0.8;
+    sp.position.set(wx, y0, wz); this.scene.add(sp);
+    this.pops.push({ obj: sp, t0: performance.now(), y0, x: wx, z: wz });
+  }
+  // بازچینی صحنه (بعد از تغییر مالکیت: موجودات خانه‌ی تصاحب‌شده می‌روند)
+  invalidate() { this.lastLoad.set(-9999, -9999); }
   mobile: boolean;
   frameMs = 16;
 
@@ -304,6 +323,13 @@ export class World {
     for (const tb of this.tombObjs) { const cap = tb.userData.cap as Mesh | undefined; if (!cap) continue; cap.rotation.y = t; cap.position.y = (tb.userData.capBase ?? (tb.userData.capBase = cap.position.y)) + Math.sin(t * 2) * 0.05; }
     if (this.treasureObj && this.treasureObj.userData.gem) { const gem = this.treasureObj.userData.gem as Mesh; gem.rotation.y = t * 1.3; gem.position.y = (this.treasureObj.userData.gemBase ?? (this.treasureObj.userData.gemBase = gem.position.y)) + Math.sin(t * 2.2) * 0.06; }
     if (this.caravanObj) { this.caravanObj.position.y += 0; (this.caravanObj.userData.ring as Mesh).scale.setScalar(pulse); }
+    // متن‌های شناور
+    const nowP = performance.now();
+    for (let i = this.pops.length - 1; i >= 0; i--) {
+      const p = this.pops[i]; const k = (nowP - p.t0) / 1800;
+      if (k >= 1) { this.scene.remove(p.obj); (p.obj.material as any).map.dispose(); p.obj.material.dispose(); this.pops.splice(i, 1); continue; }
+      p.obj.position.set(p.x, p.y0 + k * 1.2, p.z); (p.obj.material as any).opacity = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
+    }
     const s = performance.now();
     this.composer.update();
     this.composer.composer.render();

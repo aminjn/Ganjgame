@@ -2,7 +2,7 @@
 import type { Terrain } from '../rules/constants';
 
 export const MINI_COLORS: Record<Terrain, string> = {
-  safe: '#9cc46a', plain: '#7fbf58', mountain: '#a0958a', marsh: '#4d6a46', danger: '#8e4e3e', hell: '#5c3230', tomb: '#b06cff', treasure: '#ffd54a', valley: '#2b2930',
+  safe: '#a9d452', plain: '#8ec946', mountain: '#a39c8c', marsh: '#5c7a3a', danger: '#b0553f', hell: '#7a3328', tomb: '#b06cff', treasure: '#ffd54a', valley: '#4a423f',
 };
 
 export function drawTerrainPreview(canvas: HTMLCanvasElement, at: (x: number, y: number) => Terrain, res = 200): ImageData {
@@ -11,7 +11,10 @@ export function drawTerrainPreview(canvas: HTMLCanvasElement, at: (x: number, y:
   const img = ctx.createImageData(res, res);
   const step = 1000 / res;
   for (let j = 0; j < res; j++) for (let i = 0; i < res; i++) {
-    const t = at(Math.floor(i * step + step / 2), Math.floor(j * step + step / 2));
+    const cx = Math.floor(i * step + step / 2), cy = Math.floor(j * step + step / 2);
+    const votes: Partial<Record<Terrain, number>> = {};
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const t = at(Math.min(999, Math.max(0, cx + dx * 2)), Math.min(999, Math.max(0, cy + dy * 2))); votes[t] = (votes[t] ?? 0) + (t === 'valley' || t === 'hell' ? 2 : 1); }
+    const t = (Object.entries(votes).sort((a, b) => b[1] - a[1])[0][0]) as Terrain;
     const c = MINI_COLORS[t];
     const k = (j * res + i) * 4;
     img.data[k] = parseInt(c.slice(1, 3), 16); img.data[k + 1] = parseInt(c.slice(3, 5), 16); img.data[k + 2] = parseInt(c.slice(5, 7), 16); img.data[k + 3] = 255;

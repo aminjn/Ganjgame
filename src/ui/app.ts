@@ -133,6 +133,15 @@ export class Game {
 
   onEvent(e: Event) {
     this.toast(e.text, e.kind);
+    if (e.tile) {
+      const m = e.text.match(/تلفات: (\d+)/);
+      if (e.kind === 'win') { const xp = e.text.match(/\+(\d+) تجربه/); if (xp) this.world.popText(e.tile, `+${faDigits(xp[1])} تجربه`, '#9df07a'); if (m) setTimeout(() => this.world.popText(e.tile!, `−${faDigits(m[1])}`, '#ff7f6e'), 350); }
+      if (e.kind === 'lose') { this.world.popText(e.tile, 'شکست!', '#ff6b5a', true); if (m) setTimeout(() => this.world.popText(e.tile!, `−${faDigits(m[1])}`, '#ff7f6e'), 350); }
+      if (e.kind === 'loot') this.world.popText(e.tile, e.text.replace(' پیدا شد', '').split(' (')[0], '#ffe98a');
+      if (e.kind === 'artifact') this.world.popText(e.tile, 'آرتیفکت!', '#d6b3ff', true);
+      if (e.kind === 'win' || e.kind === 'lose' || e.kind === 'artifact') this.world.invalidate();
+    }
+    if (e.kind === 'treasure') this.world.popText({ x: C.CENTER, y: C.CENTER }, 'گنج فتح شد!', '#ffe98a', true);
     if (e.kind === 'win' || e.kind === 'lose') { this.dirty = true; }
     if (e.kind === 'treasure' || e.kind === 'season') { writeSeason({ ...(readSeason() ?? { season: this.st.season, startedAt: this.st.createdAt, startedByAdmin: this.st.startedByAdmin, lastCmd: 0 }), closed: this.st.seasonClosed }); }
     if (e.kind === 'lose' && e.tile) { const c = S.actorOf(this.st, e.who).camp; if (c) this.world.setFocus(c.x, c.y, true); }
